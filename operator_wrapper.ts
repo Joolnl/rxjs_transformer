@@ -3,7 +3,8 @@ import {
   createPipeableOperatorMetadataExpression, createObservableMetadataExpression,
   createSubscriberMetadataExpression, createPipeMetadataExpression, createJoinObservableMetadataExpression
 } from './metadata';
-import * as uuid from 'uuid/v4';
+// import * as uuid from 'uuid/v4';
+import { v4 as uuid } from 'uuid';
 
 type WrappedCallExpressionFn = (a: string, b: string, c?: ts.Expression[]) => ts.CallExpression;
 
