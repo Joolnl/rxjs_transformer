@@ -3,25 +3,19 @@ import { dispatchNode } from './node_dispatcher';
 
 // Add import to given SourceFile.
 // format: import importname as alias from file
-const addNamedImportToSourceFile = (rootNode: ts.SourceFile, importName: string, alias: string, file: string): ts.SourceFile => {
-  return ts.updateSourceFileNode(rootNode,
-    [ts.createImportDeclaration(
-        /*decorators*/undefined,
-        /*modifiers*/ undefined,
-      ts.createImportClause(
-        undefined,
-        ts.createNamedImports([ts.createImportSpecifier(ts.createIdentifier(`${importName}`), ts.createIdentifier(`${alias}`))])
-      ),
-      ts.createLiteral(`${file}`)
-    ), ...rootNode.statements]);
+const addNamedImportToSourceFile = (rootNode: ts.SourceFile, importName: string): ts.SourceFile => {
+  const specifier = ts.createImportSpecifier(undefined, ts.createIdentifier(importName));
+  const namedImport = ts.createNamedImports([specifier]);
+  const importClause = ts.createImportClause(undefined, namedImport);
+  const importDeclaration = ts.createImportDeclaration(undefined, undefined, importClause, ts.createStringLiteral('rxjs-transformer/dist/rxjs_wrapper'));
+  return ts.updateSourceFileNode(rootNode, [importDeclaration, ...rootNode.statements]);
 };
 
 // Add array of wrapper functions to given source file node.
 const addWrapperFunctionImportArray = (rootNode: ts.SourceFile, operators: string[]): ts.SourceFile => {
-  const file = 'src/rxjs_wrapper';
   operators
     .filter(operator => operator !== null)
-    .map(operator => rootNode = addNamedImportToSourceFile(rootNode, operator, operator, file));
+    .map(operator => rootNode = addNamedImportToSourceFile(rootNode, operator));
   return rootNode;
 };
 
