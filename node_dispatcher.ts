@@ -80,7 +80,6 @@ export const dispatchNode = (node: ts.Node): [ts.Node, string | null] => {
         case 'UNCLASSIFIED':
             return [node, null];
         case 'RXJS_CREATION_OPERATOR':
-            console.log('Found a rxjs_creation_operator');
             node = createWrapCreationExpression(node as ts.CallExpression);
             return [node, 'wrapCreationOperator'];
         case 'RXJS_JOIN_CREATION_OPERATOR':

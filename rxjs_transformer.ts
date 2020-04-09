@@ -34,7 +34,6 @@ export const rxjsTransformer = (context: ts.TransformationContext) => {
     }
 
     function visitSourceFile(sourceFile: ts.SourceFile): ts.SourceFile {
-      console.log(`is sourcefile ${ts.isSourceFile(sourceFile)} ${typeof sourceFile}`);
       const importStatements: Set<string> = new Set();
 
       const visitNodes = (node: ts.Node): ts.Node => {
