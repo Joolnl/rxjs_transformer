@@ -1,5 +1,6 @@
 import * as ts from 'typescript';
-import * as v5 from 'uuid/v5';
+// import * as v5 from 'uuid/v5';
+import { v5 } from 'uuid';
 
 export interface ObservableMetadata {
     uuid: string;
@@ -51,8 +52,8 @@ const namedPipes = new Map<string, string>();
 
 // Generate unique id from seed: filename, line and pos.
 const generateId = (filename: string, line: number, pos: number): string => {
-    // const uuid = v5(`${filename}${line}${pos}`, 'e01462c8-517f-11ea-8d77-2e728ce88125');
-    const uuid = `${filename}${line}${pos}`;
+    const uuid = v5(`${filename}${line}${pos}`, 'e01462c8-517f-11ea-8d77-2e728ce88125');
+    // const uuid = `${filename}${line}${pos}`;
     return uuid;
 };
 
