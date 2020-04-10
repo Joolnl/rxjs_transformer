@@ -47,8 +47,13 @@ export interface SubscriberMetadata {
     line: number;
 }
 
+interface PipeObservablePair {
+    pipe: string;
+    observable: ts.Identifier;
+}
+
 const namedObservables = new Map<string, ts.Identifier>();
-const namedPipes = new Map<string, string>();
+const namedPipes = new Map<string, PipeObservablePair>();
 
 // Generate unique id from seed: filename, line and pos.
 const generateId = (filename: string, line: number, pos: number): string => {
@@ -167,10 +172,17 @@ const getObservable = (node: ts.Expression): ts.Identifier => {
     if (ts.isPropertyAccessExpression(node) || ts.isCallExpression(node)) {
         return getObservable(node.expression);
     } else if (ts.isIdentifier(node)) {
-        if (ts.isPropertyAccessExpression(node.parent)) {
-            return namedObservables.get(node.getText());
-        }
-        return node;
+        if (ts.isPropertyAccessExpression(node.parent)) {   // This can be either a pipe or an observable.
+            if (namedPipes.has(node.getText())) {
+                return namedPipes.get(node.getText()).observable;
+            } else if (namedObservables.has(node.getText())) {
+                return namedObservables.get(node.getText());
+            } else {
+                throw new Error('No observable found!');
+            }
+        } 
+
+        return node;    // Return anonymous observable.
     } else {
         throw new Error('No Observable found!');
     }
@@ -184,11 +196,12 @@ export const createPipeMetadataExpression = (
 ): [ts.ObjectLiteralExpression, string, string] => {
     const { file, line, pos } = extractMetadata(identifier);
     const uuid = generateId(file, line, pos);
-    const observableMetadata = extractMetadata(getObservable(node));
+    const observable = getObservable(node);
+    const observableMetadata = extractMetadata(observable);
     const observableUUID = generateId(observableMetadata.file, observableMetadata.line, observableMetadata.pos);
 
     if (variableName !== 'anonymous') {
-        namedPipes.set(variableName, uuid);
+        namedPipes.set(variableName, { pipe: uuid, observable: observable });
     }
 
     const objectLiteral = ts.createObjectLiteral([
@@ -254,11 +267,12 @@ const createArrayLiteralProperty = (name: string, pipes: Array<Pipe>): ts.Proper
         .map(metadata => generateId(metadata.file, metadata.line, metadata.pos));
 
     // Fetch already generated UUID's for non-anonymous pipes.
-    const nonAnonymousPipes = pipes
+    const nonAnonymousPipes: string[] = pipes
         .filter(pipe => !pipe.anonymous)
         .map(pipe => pipe.node)
         .map(pipeNode => pipeNode.getText())
-        .map(pipeName => namedPipes.get(pipeName));
+        .map(pipeName => namedPipes.get(pipeName)?.pipe)
+        .filter(pipe => pipe)
 
     // Join arrays and filter null-type values.
     const pipeLiterals = anonymousPipes.concat(nonAnonymousPipes)
