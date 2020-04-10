@@ -2,8 +2,8 @@
   "name": "rxjs-transformer",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/rxjs_transformer.js",
-  "types": "dist/rxjs_transformer.d.ts",
+  "main": "dist/ng-ts-register-transformer.js",
+  "types": "dist/ng-ts-register-transformer.d.ts",
   "scripts": {
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -11,10 +11,14 @@
   "author": "Roy Touw",
   "license": "ISC",
   "dependencies": {
+    "@angular/compiler": "^9.1.1",
+    "@angular/compiler-cli": "^9.1.1",
+    "@ngtools/webpack": "^9.1.1",
     "@types/uuid": "^7.0.2",
     "copyfiles": "^2.2.0",
     "rxjs": "^6.5.5",
     "typescript": "~3.5.3",
-    "uuid": "^7.0.3"
+    "uuid": "^7.0.3",
+    "webpack": "^4.42.1"
   }
 }
