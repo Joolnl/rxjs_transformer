@@ -12,9 +12,11 @@ behavior herafter.
 
 ## Installation
 1. navigate into angular project
-2. npm i ngx-build-plus
-3. npm i C:\Users\Roy\Documents\school\iWLAB\npm_transformer
-4. ng add ngx-build-plus
+2. ```npm i --save-dev ngx-build-plus```
+3. ```npm i --save-dev C:\Users\Roy\Documents\school\iWLAB\npm_transformer```
+4. add ngx-build-plus to project:
+4a. ```ng add ngx-build-plus``` (for angular 8)
+4b. ```ng add ngx-build-plus@7``` (for angular versions 6 and 7)
 5. mutate angular.json => under serve options add "plugin":  "rxjs-transformer",
 
 e.g. plugin field in serve options:
