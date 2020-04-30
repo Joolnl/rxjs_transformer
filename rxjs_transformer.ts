@@ -19,14 +19,25 @@ const addWrapperFunctionImportArray = (rootNode: ts.SourceFile, operators: strin
   return rootNode;
 };
 
+// TODO: for testing purpose only
+const importOf = (rootNode: ts.SourceFile): ts.SourceFile => {
+  const specifier = ts.createImportSpecifier(undefined, ts.createIdentifier('of'));
+  const namedImport = ts.createNamedImports([specifier]);
+  const importClause = ts.createImportClause(undefined, namedImport);
+  const importDeclaration = ts.createImportDeclaration(undefined, undefined, importClause, ts.createStringLiteral('rxjs'));
+  return ts.updateSourceFileNode(rootNode, [importDeclaration, ...rootNode.statements]);
+}
+
 
 // Loops over all nodes, when node matches teststring, replaces the string literal.
 export const rxjsTransformer = (context: ts.TransformationContext) => {
   return (rootNode: ts.SourceFile) => {
-    if (rootNode.fileName.includes('/rxjs_wrapper.ts')) {
+    if (rootNode.fileName.includes('/rxjs_wrapper.ts') && rootNode.fileName.includes('/node_modules')) {
       return rootNode;
     }
-
+    else if (!rootNode.fileName.includes('main-menu.component')) { //TODO: Remove this.
+      return rootNode;
+    }
     function visitSourceFile(sourceFile: ts.SourceFile): ts.SourceFile {
       const importStatements: Set<string> = new Set();
 
@@ -49,9 +60,17 @@ export const rxjsTransformer = (context: ts.TransformationContext) => {
         importStatements.add('wrapPipeableOperator');
       }
 
-      return addWrapperFunctionImportArray(root, Array.from(importStatements));
+
+      return importOf(addWrapperFunctionImportArray(root, Array.from(importStatements)));
     }
 
-    return ts.visitNode(rootNode, visitSourceFile);
+    try {
+      return ts.visitNode(rootNode, visitSourceFile);
+    } catch (e) {
+      console.error(`\nFailed transforming ${rootNode.fileName}`);
+      console.log(e);
+      return rootNode;
+    }
+
   };
 };

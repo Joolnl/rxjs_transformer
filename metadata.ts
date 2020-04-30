@@ -178,13 +178,13 @@ const getObservable = (node: ts.Expression): ts.Identifier => {
             } else if (namedObservables.has(node.getText())) {
                 return namedObservables.get(node.getText());
             } else {
-                throw new Error('No observable found!');
+                throw new Error(`No Observable found for ${node.getText()}`);
             }
-        } 
+        }
 
         return node;    // Return anonymous observable.
     } else {
-        throw new Error('No Observable found!');
+        throw new Error('No Observable found invalid node type!');
     }
 };
 
@@ -194,25 +194,31 @@ export const createPipeMetadataExpression = (
     identifier: ts.Identifier,
     variableName: string
 ): [ts.ObjectLiteralExpression, string, string] => {
-    const { file, line, pos } = extractMetadata(identifier);
-    const uuid = generateId(file, line, pos);
-    const observable = getObservable(node);
-    const observableMetadata = extractMetadata(observable);
-    const observableUUID = generateId(observableMetadata.file, observableMetadata.line, observableMetadata.pos);
+    try {
+        const { file, line, pos } = extractMetadata(identifier);
+        const uuid = generateId(file, line, pos);
+        const observable = getObservable(node);
+        const observableMetadata = extractMetadata(observable);
+        const observableUUID = generateId(observableMetadata.file, observableMetadata.line, observableMetadata.pos);
 
-    if (variableName !== 'anonymous') {
-        namedPipes.set(variableName, { pipe: uuid, observable: observable });
+        if (variableName !== 'anonymous') {
+            namedPipes.set(variableName, { pipe: uuid, observable: observable });
+        }
+
+        const objectLiteral = ts.createObjectLiteral([
+            createProperty('uuid', uuid),
+            createProperty('observable', observableUUID),
+            createProperty('identifier', variableName),
+            createProperty('file', file),
+            createProperty('line', line)
+        ]);
+
+        return [objectLiteral, uuid, observableUUID];
+    } catch (e) {
+        throw e;
     }
 
-    const objectLiteral = ts.createObjectLiteral([
-        createProperty('uuid', uuid),
-        createProperty('observable', observableUUID),
-        createProperty('identifier', variableName),
-        createProperty('file', file),
-        createProperty('line', line)
-    ]);
 
-    return [objectLiteral, uuid, observableUUID];
 };
 
 // Create operator metadata object literal.
@@ -284,16 +290,20 @@ const createArrayLiteralProperty = (name: string, pipes: Array<Pipe>): ts.Proper
 
 // Create subscribe metadata object literal.
 export const createSubscriberMetadataExpression = (node: ts.CallExpression): ts.ObjectLiteralExpression => {
-    const { file, line } = extractMetadata(node);
-    const observableMetadata = extractMetadata(getObservable(node));
-    const observableUUID = generateId(observableMetadata.file, observableMetadata.line, observableMetadata.pos);
-    const pipes = createArrayLiteralProperty('pipes', getPipeArray(node));
+    try {
+        const { file, line } = extractMetadata(node);
+        const observableMetadata = extractMetadata(getObservable(node));
+        const observableUUID = generateId(observableMetadata.file, observableMetadata.line, observableMetadata.pos);
+        const pipes = createArrayLiteralProperty('pipes', getPipeArray(node));
 
-    return ts.createObjectLiteral([
-        createProperty('observable', observableUUID),
-        pipes,
-        createProperty('function', 'testFn'),
-        createProperty('file', file),
-        createProperty('line', line)
-    ]);
+        return ts.createObjectLiteral([
+            createProperty('observable', observableUUID),
+            pipes,
+            createProperty('function', 'testFn'),
+            createProperty('file', file),
+            createProperty('line', line)
+        ]);
+    } catch (e) {
+        throw e;
+    }
 };

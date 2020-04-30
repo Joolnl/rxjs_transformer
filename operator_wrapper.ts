@@ -64,24 +64,32 @@ const wrapPipeableOperatorArray = (
 
 // Wrap pipe and all its operators.
 export const wrapPipeStatement = (node: ts.CallExpression): ts.CallExpression => {
-  const propertyAccessExpr: ts.PropertyAccessExpression = node.expression as ts.PropertyAccessExpression;
-  const source$: ts.Identifier = propertyAccessExpr.expression as ts.Identifier;
-  const identifier: ts.Identifier = propertyAccessExpr.name as ts.Identifier;
+  try {
+    const propertyAccessExpr: ts.PropertyAccessExpression = node.expression as ts.PropertyAccessExpression;
+    const source$: ts.Identifier = propertyAccessExpr.expression as ts.Identifier;
+    const identifier: ts.Identifier = propertyAccessExpr.name as ts.Identifier;
 
-  const variableName = ts.isVariableDeclaration(node.parent)  // TODO: duplicate code extract to function.
-    ? node.parent.name.getText()
-    : 'anonymous';
-  const [metadataExpression, pipeUUID, observableUUID] = createPipeMetadataExpression(node, identifier, variableName);
-  const args = wrapPipeableOperatorArray(node.arguments, pipeUUID, observableUUID).map(arg => arg);
-  return ts.createCall(ts.createIdentifier('wrapPipe'), undefined, [source$, metadataExpression, ...args]);
+    const variableName = ts.isVariableDeclaration(node.parent)  // TODO: duplicate code extract to function.
+      ? node.parent.name.getText()
+      : 'anonymous';
+    const [metadataExpression, pipeUUID, observableUUID] = createPipeMetadataExpression(node, identifier, variableName);
+    const args = wrapPipeableOperatorArray(node.arguments, pipeUUID, observableUUID).map(arg => arg);
+    return ts.createCall(ts.createIdentifier('wrapPipe'), undefined, [source$, metadataExpression, ...args]);
+  } catch (e) {
+    throw e;
+  }
 };
 
 // Wrapp subscribe method and return expression.
 export const wrapSubscribeMethod = (node: ts.CallExpression): ts.CallExpression => {
-  const args = node.arguments.map(arg => arg);  // ts.NodeArray => array.
-  const propertyAccessExpr = node.expression as ts.PropertyAccessExpression;
-  const source$: ts.Identifier = propertyAccessExpr.expression as ts.Identifier;
-  const metadata = createSubscriberMetadataExpression(node);
+  try {
+    const args = node.arguments.map(arg => arg);  // ts.NodeArray => array.
+    const propertyAccessExpr = node.expression as ts.PropertyAccessExpression;
+    const source$: ts.Identifier = propertyAccessExpr.expression as ts.Identifier;
+    const metadata = createSubscriberMetadataExpression(node);
 
-  return ts.createCall(ts.createIdentifier('wrapSubscribe'), undefined, [source$, metadata, ...args]);
+    return ts.createCall(ts.createIdentifier('wrapSubscribe'), undefined, [source$, metadata, ...args]);
+  } catch (e) {
+    throw e;
+  }
 };

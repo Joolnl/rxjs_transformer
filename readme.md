@@ -1,7 +1,7 @@
 ## Target
 * Angular 6, 7, 8 (not for Ivy Compiler) (developed on 8.2.2)
 * RxJS Version 6 (developed on 6.4.0)
-* typescript ~2.9.2
+* typescript ~3.5.3
 
 ## Usage
 Install the transformer into an Angular Project (see installation below).

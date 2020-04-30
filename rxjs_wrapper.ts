@@ -71,18 +71,6 @@ const createEvent = <T>(id: number, data: T, observable: string, receiver: strin
     return { id, data, observable, receiver, type };
 };
 
-// Unpack given box or event;
-const unpack = <T>(event: T | Box<T>, observable: string, pipe: string): { id: number, event: T } => {
-    if (event instanceof Box) {
-        return { id: event.id, event: event.value };
-    } else {
-        const id = simpleLastUid++;
-        const initialEventMessage = createPayloadMessage<T>(createEvent(id, event, observable, pipe, EventType.initial), MessageType.event);
-        sendToBackpage(initialEventMessage);
-        return { id, event };
-    }
-
-};
 
 // Wrap creation operator and return it, send data to backpage.
 export const wrapCreationOperator = <T extends Array<any>, U>(fn: (...args: T) => U, metadata: ObservableMetadata) => (...args: T) => {
@@ -104,10 +92,23 @@ export const wrapJoinCreationOperator = <T extends Array<any>, U>(
     return fn(...args);
 };
 
+
+// Unpack given box or event;
+const unpack = <T>(event: T | Box<T>, observable: string, pipe: string): { id: number, event: T } => {
+    if (event instanceof Box) {
+        return { id: event.id, event: event.value };
+    } else {
+        const id = simpleLastUid++;
+        const initialEventMessage =
+            createPayloadMessage<T>(createEvent(id, event, observable, pipe, EventType.initial), MessageType.event);
+        sendToBackpage(initialEventMessage);
+        return { id, event };
+    }
+};
+
 // Take source, pipe it, box event with new id, tap box, unpack box and pass along value.
 export const wrapPipeableOperator = <T>(operatorFn: MonoTypeOperatorFunction<T>, last: boolean, metadata: PipeableOperatorMetadata) => {
     return (source$: Observable<T>) => {
-        // console.log(`wrapPipeableOperator ${metadata.line} ${metadata.function} ${metadata.pipe}`);
         const message = createPayloadMessage(metadata, MessageType.operator);
         sendToBackpage(message);
 
@@ -119,7 +120,10 @@ export const wrapPipeableOperator = <T>(operatorFn: MonoTypeOperatorFunction<T>,
                 return e.event;
             }),
             operatorFn,
-            tap(e => sendToBackpage(createPayloadMessage<T>(createEvent(id, e, metadata.observable, metadata.uuid, EventType.operator), MessageType.event))),
+            tap(e => sendToBackpage(createPayloadMessage<T>(
+                createEvent(id, e, metadata.observable, metadata.uuid, EventType.operator)
+                , MessageType.event
+            ))),
             tap(e => console.log(`${e} ${metadata.observable} ${id}`)),
             map(e => last ? e : new Box<T>(e, id))
         );
