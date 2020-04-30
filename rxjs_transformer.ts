@@ -1,32 +1,33 @@
 import * as ts from 'typescript';
 import { dispatchNode } from './node_dispatcher';
+import { Dependency, importDependencies } from './importer';
 
 // Add import to given SourceFile.
 // format: import importname as alias from file
-const addNamedImportToSourceFile = (rootNode: ts.SourceFile, importName: string): ts.SourceFile => {
-  const specifier = ts.createImportSpecifier(undefined, ts.createIdentifier(importName));
-  const namedImport = ts.createNamedImports([specifier]);
-  const importClause = ts.createImportClause(undefined, namedImport);
-  const importDeclaration = ts.createImportDeclaration(undefined, undefined, importClause, ts.createStringLiteral('rxjs-transformer/dist/rxjs_wrapper'));
-  return ts.updateSourceFileNode(rootNode, [importDeclaration, ...rootNode.statements]);
-};
+// const addNamedImportToSourceFile = (rootNode: ts.SourceFile, importName: string): ts.SourceFile => {
+//   const specifier = ts.createImportSpecifier(undefined, ts.createIdentifier(importName));
+//   const namedImport = ts.createNamedImports([specifier]);
+//   const importClause = ts.createImportClause(undefined, namedImport);
+//   const importDeclaration = ts.createImportDeclaration(undefined, undefined, importClause, ts.createStringLiteral('rxjs-transformer/dist/rxjs_wrapper'));
+//   return ts.updateSourceFileNode(rootNode, [importDeclaration, ...rootNode.statements]);
+// };
 
-// Add array of wrapper functions to given source file node.
-const addWrapperFunctionImportArray = (rootNode: ts.SourceFile, operators: string[]): ts.SourceFile => {
-  operators
-    .filter(operator => operator !== null)
-    .map(operator => rootNode = addNamedImportToSourceFile(rootNode, operator));
-  return rootNode;
-};
+// // Add array of wrapper functions to given source file node.
+// const addWrapperFunctionImportArray = (rootNode: ts.SourceFile, operators: string[]): ts.SourceFile => {
+//   operators
+//     .filter(operator => operator !== null)
+//     .map(operator => rootNode = addNamedImportToSourceFile(rootNode, operator));
+//   return rootNode;
+// };
 
 // TODO: for testing purpose only
-const importOf = (rootNode: ts.SourceFile): ts.SourceFile => {
-  const specifier = ts.createImportSpecifier(undefined, ts.createIdentifier('of'));
-  const namedImport = ts.createNamedImports([specifier]);
-  const importClause = ts.createImportClause(undefined, namedImport);
-  const importDeclaration = ts.createImportDeclaration(undefined, undefined, importClause, ts.createStringLiteral('rxjs'));
-  return ts.updateSourceFileNode(rootNode, [importDeclaration, ...rootNode.statements]);
-}
+// const importOf = (rootNode: ts.SourceFile): ts.SourceFile => {
+//   const specifier = ts.createImportSpecifier(undefined, ts.createIdentifier('of'));
+//   const namedImport = ts.createNamedImports([specifier]);
+//   const importClause = ts.createImportClause(undefined, namedImport);
+//   const importDeclaration = ts.createImportDeclaration(undefined, undefined, importClause, ts.createStringLiteral('rxjs'));
+//   return ts.updateSourceFileNode(rootNode, [importDeclaration, ...rootNode.statements]);
+// }
 
 
 // Loops over all nodes, when node matches teststring, replaces the string literal.
@@ -52,16 +53,18 @@ export const rxjsTransformer = (context: ts.TransformationContext) => {
 
       const root = visitNodes(sourceFile) as ts.SourceFile;
 
-      if (importStatements.size) { // Required by all wrapper functions.
-        importStatements.add('sendEventToBackpage');
-      }
+      // if (importStatements.size) { // Required by all wrapper functions.
+      //   importStatements.add('sendEventToBackpage');
+      // }
 
-      if (importStatements.has('wrapPipe')) { // Required in wrapped pipe.
-        importStatements.add('wrapPipeableOperator');
-      }
+      // if (importStatements.has('wrapPipe')) { // Required in wrapped pipe.
+      //   importStatements.add('wrapPipeableOperator');
+      // }
 
 
-      return importOf(addWrapperFunctionImportArray(root, Array.from(importStatements)));
+      // return importOf(addWrapperFunctionImportArray(root, Array.from(importStatements)));
+      const ofDependency: Dependency = { identifier: 'of', location: 'rxjs' };
+      return importDependencies(root, [ofDependency]);
     }
 
     try {
