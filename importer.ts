@@ -2,7 +2,7 @@ import * as ts from 'typescript';
 import { differenceWith, compose } from 'ramda';
 
 export type Dependency = { identifier: string | string[], location: string };
-const wrapperLocation = 'rxjs-transformer/dist/rxjs_wrapper';
+export const wrapperLocation = 'rxjs-transformer/dist/rxjs_wrapper';
 
 // TODO: make array import possible.
 // Create import decleration for given Dependency.
@@ -14,14 +14,14 @@ export const createImportDeclaration = (dependency: Dependency): ts.ImportDeclar
 };
 
 // Add sendToBackPage dependency if required.
-export const sendToBackPageDependency = (requirements: Dependency[]): Dependency[] => {
+export const addSendToBackPageDependency = (requirements: Dependency[]): Dependency[] => {
     return requirements.length
         ? [{ identifier: 'sendToBackpage', location: wrapperLocation }, ...requirements]
         : requirements;
 };
 
 // Add wrapPipeableOperator dependency if required.
-export const wrapPipeableOperatorDependency = (requirements: Dependency[]): Dependency[] => {
+export const addWrapPipeableOperatorDependency = (requirements: Dependency[]): Dependency[] => {
     return requirements.filter(requirement => requirement.identifier === 'wrapPipe').length
         ? [{ identifier: 'wrapPipeableOperator', location: wrapperLocation }, ...requirements]
         : requirements;
@@ -49,16 +49,27 @@ const addImportsToSourceFile = (source: ts.SourceFile, dependacies: Dependency[]
     return ts.updateSourceFileNode(source, [...dependacies.map(createImportDeclaration), ...source.statements]);
 };
 
+export const addIfNotPresent = (array: Dependency[], dependency: Dependency): Dependency[] => {
+    const compareDependency = (l: Dependency, r: Dependency): boolean => {
+        return l.location === r.location && l.identifier === r.identifier;
+    };
+
+    return array.filter(dep => compareDependency(dep, dependency)).length
+        ? array
+        : [...array, dependency];
+};
+
 // TODO: ugly fix for now.
-const concat = (x: any, y: any) => x.concat(y);
-const flatMap = (f, xs) => xs.map(f).reduce(concat, []);
-Array.prototype.flatMap = function (f) {
-    return flatMap(f, this);
+if (!Array.prototype.flatMap) {
+    const concat = (x: any, y: any) => x.concat(y);
+    const flatMap = (f, xs) => xs.map(f).reduce(concat, []);
+    Array.prototype.flatMap = function (f) {
+        return flatMap(f, this);
+    }
 }
 
-
 // Import given requirements and dependencies for requirements to sourcefile.
-export const importDependencies = (source: ts.SourceFile, requirements: Dependency[]): ts.SourceFile => {
+export const importDependencies = (source: ts.SourceFile, dependencies: Dependency[]): ts.SourceFile => {
     const imported = source.statements
         .filter(statement => ts.isImportDeclaration(statement))
         .flatMap(importDeclaration => importDeclarationIdentifiers(importDeclaration as ts.ImportDeclaration));
@@ -67,11 +78,12 @@ export const importDependencies = (source: ts.SourceFile, requirements: Dependen
     const addWrapCreationOperatorForTesting = (reqs: Dependency[]): Dependency[] => {
         return [{ identifier: 'wrapCreationOperator', location: wrapperLocation }, ...reqs];
     }
+
     const transform = compose(
         substraction(imported),
-        sendToBackPageDependency,
+        addSendToBackPageDependency,
         addWrapCreationOperatorForTesting,
-        wrapPipeableOperatorDependency);
+        addWrapPipeableOperatorDependency);
 
-    return addImportsToSourceFile(source, transform(requirements));
+    return addImportsToSourceFile(source, transform(dependencies));
 };
