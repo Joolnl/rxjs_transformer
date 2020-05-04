@@ -1,4 +1,4 @@
-import { Dependency, createImportDeclaration, importDeclarationIdentifiers, addSendToBackPageDependency, addWrapPipeableOperatorDependency, substraction, addIfNotPresent, addWrapCreationOperatorDependency } from './importer';
+import { Dependency, createImportDeclaration, importDeclarationIdentifiers, addSendToBackPageDependency, addWrapPipeableOperatorDependency, substraction, addIfNotPresent, addWrapCreationOperatorDependency, addWrapJoinCreationOperatorDependency } from './importer';
 import { rxjsCreationOperators, rxjsJoinCreationOperators } from './rxjs_operators';
 
 const wrapperLocation = 'rxjs-transformer/dist/rxjs_wrapper';
@@ -46,6 +46,18 @@ test('addWrapCreationOperator should add wrapCreationOperator dependency if requ
     const wrapCreationDependency: Dependency = { identifier: 'wrapCreationOperator', location: wrapperLocation };
     expect(addWrapCreationOperatorDependency(emptyDependancies)).toEqual([]);
     expect(addWrapCreationOperatorDependency(creationDependency)).toEqual([wrapCreationDependency, ...creationDependency]);
+});
+
+test('addWrapJoinCreationOperator should add wrapJoinCreationOperator dependency if required', () => {
+    const emptyDependancies: Dependency[] = [];
+    const creationDependency: Dependency[] = rxjsJoinCreationOperators
+        .concat(rxjsJoinCreationOperators)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 1)
+        .map(operator => ({ identifier: operator, location: 'rxjs' }));
+    const wrapJoinCreationDependency: Dependency = { identifier: 'wrapJoinCreationOperator', location: wrapperLocation };
+    expect(addWrapJoinCreationOperatorDependency(emptyDependancies)).toEqual([]);
+    expect(addWrapJoinCreationOperatorDependency(creationDependency)).toEqual([wrapJoinCreationDependency, ...creationDependency]);
 });
 
 test('substraction should return arr1 substracted with arr2', () => {

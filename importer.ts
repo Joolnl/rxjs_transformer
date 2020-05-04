@@ -5,6 +5,8 @@ import { rxjsCreationOperators, rxjsJoinCreationOperators } from './rxjs_operato
 export type Dependency = { identifier: string | string[], location: string };
 export const wrapperLocation = 'rxjs-transformer/dist/rxjs_wrapper';
 
+const compare = (l: Dependency, r: Dependency): boolean => l.identifier === r.identifier && l.location === r.location;
+
 // TODO: make array import possible.
 // Create import decleration for given Dependency.
 export const createImportDeclaration = (dependency: Dependency): ts.ImportDeclaration => {
@@ -42,7 +44,7 @@ export const importDeclarationIdentifiers = (importDecl: ts.ImportDeclaration): 
     return result
         .filter(node => ts.isImportSpecifier(node))
         .map(dependency => dependency.name.text)
-        .map(identifier => ({ identifier, location: moduleSpecifier.text }))
+        .map(identifier => ({ identifier, location: moduleSpecifier.text }));
 };
 
 // Add given dependacies as import declaration statements to given sourcefile.
@@ -51,26 +53,30 @@ const addImportsToSourceFile = (source: ts.SourceFile, dependacies: Dependency[]
 };
 
 export const addIfNotPresent = (array: Dependency[], dependency: Dependency): Dependency[] => {
-    const compareDependency = (l: Dependency, r: Dependency): boolean => {
-        return l.location === r.location && l.identifier === r.identifier;
-    };
-
-    return array.filter(dep => compareDependency(dep, dependency)).length
+    return array.filter(dep => compare(dep, dependency)).length
         ? array
         : [...array, dependency];
 };
 
 const rxjsCreationDependencies: Dependency[] = rxjsCreationOperators
-    .concat(rxjsJoinCreationOperators)
     .map(operator => ({ identifier: operator, location: 'rxjs' }));
 
 // Add wrapCreationOperator dependency if required.
 export const addWrapCreationOperatorDependency = (reqs: Dependency[]): Dependency[] => {
-    const compare = (l: Dependency, r: Dependency): boolean => l.identifier === r.identifier && l.location === r.location;
     return innerJoin(compare, reqs, rxjsCreationDependencies).length
         ? [{ identifier: 'wrapCreationOperator', location: wrapperLocation }, ...reqs]
         : reqs;
-}
+};
+
+const rxjsJoinCreationDependencies: Dependency[] = rxjsJoinCreationOperators
+    .map(operator => ({ identifier: operator, location: 'rxjs' }));
+
+// Add wrapJoinCreationOperator dependency if required.
+export const addWrapJoinCreationOperatorDependency = (reqs: Dependency[]): Dependency[] => {
+    return innerJoin(compare, reqs, rxjsJoinCreationDependencies).length
+        ? [{ identifier: 'wrapJoinCreationOperator', location: wrapperLocation }, ...reqs]
+        : reqs;
+};
 
 // TODO: ugly fix for now.
 if (!Array.prototype.flatMap) {
@@ -87,10 +93,12 @@ export const importDependencies = (source: ts.SourceFile, dependencies: Dependen
         .filter(statement => ts.isImportDeclaration(statement))
         .flatMap(importDeclaration => importDeclarationIdentifiers(importDeclaration as ts.ImportDeclaration));
 
+    console.log(`imported ${source.fileName} ${imported}`);
     const transform = compose(
         substraction(imported),
         addSendToBackPageDependency,
         addWrapCreationOperatorDependency,
+        addWrapJoinCreationOperatorDependency,
         addWrapPipeableOperatorDependency);
 
     return addImportsToSourceFile(source, transform(dependencies));

@@ -7,7 +7,8 @@
   "scripts": {
     "build": "tsc",
     "test": "jest",
-    "test:watch": "jest --watch --verbose"
+    "test:watch": "jest --watch --verbose",
+    "debug": "node --debug-brk --inspect ./node_modules/.bin/jest -i"
   },
   "author": "Roy Touw",
   "license": "ISC",
