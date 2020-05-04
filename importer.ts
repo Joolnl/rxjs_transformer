@@ -66,7 +66,7 @@ const rxjsCreationDependencies: Dependency[] = rxjsCreationOperators
 
 // Add wrapCreationOperator dependency if required.
 export const addWrapCreationOperatorDependency = (reqs: Dependency[]): Dependency[] => {
-    const compare = (l: Dependency, r: Dependency) => l.identifier === r.identifier && l.location === r.location;
+    const compare = (l: Dependency, r: Dependency): boolean => l.identifier === r.identifier && l.location === r.location;
     return innerJoin(compare, reqs, rxjsCreationDependencies).length
         ? [{ identifier: 'wrapCreationOperator', location: wrapperLocation }, ...reqs]
         : reqs;
