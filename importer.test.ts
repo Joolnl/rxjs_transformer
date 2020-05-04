@@ -1,4 +1,5 @@
-import { Dependency, createImportDeclaration, importDeclarationIdentifiers, addSendToBackPageDependency, addWrapPipeableOperatorDependency, substraction, addIfNotPresent } from './importer';
+import { Dependency, createImportDeclaration, importDeclarationIdentifiers, addSendToBackPageDependency, addWrapPipeableOperatorDependency, substraction, addIfNotPresent, addWrapCreationOperatorDependency } from './importer';
+import { rxjsCreationOperators, rxjsJoinCreationOperators } from './rxjs_operators';
 
 const wrapperLocation = 'rxjs-transformer/dist/rxjs_wrapper';
 
@@ -35,6 +36,18 @@ test('wrapPipeableOperatorDependancy should add wrapPipeableOperator dependancy 
     expect(addWrapPipeableOperatorDependency(input)).toEqual(output);
 });
 
+test('addWrapCreationOperator should add wrapCreationOperator dependency if required', () => {
+    const emptyDependancies: Dependency[] = [];
+    const creationDependency: Dependency[] = rxjsCreationOperators
+        .concat(rxjsJoinCreationOperators)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 1)
+        .map(operator => ({ identifier: operator, location: 'rxjs' }));
+    const wrapCreationDependency: Dependency = { identifier: 'wrapCreationOperator', location: wrapperLocation };
+    expect(addWrapCreationOperatorDependency(emptyDependancies)).toEqual([]);
+    expect(addWrapCreationOperatorDependency(creationDependency)).toEqual([wrapCreationDependency, ...creationDependency]);
+});
+
 test('substraction should return arr1 substracted with arr2', () => {
     const arr1: Dependency[] = [
         { identifier: 'alfa', location: 'test' },
@@ -45,7 +58,7 @@ test('substraction should return arr1 substracted with arr2', () => {
     const arr2: Dependency[] = [
         { identifier: 'gamma', location: 'test' },
         { identifier: 'delta', location: 'test' },
-        { identifier: 'epsilon', location: 'test'}
+        { identifier: 'epsilon', location: 'test' }
     ];
     const result: Dependency[] = [
         { identifier: 'alfa', location: 'test' },
@@ -56,8 +69,8 @@ test('substraction should return arr1 substracted with arr2', () => {
 });
 
 test('addIfNotPresent should only add Dependency if not already present', () => {
-    const dep1: Dependency = {identifier: 'alfa', location: 'test'};
-    const dep2: Dependency = {identifier: 'beta', location: 'test'};
+    const dep1: Dependency = { identifier: 'alfa', location: 'test' };
+    const dep2: Dependency = { identifier: 'beta', location: 'test' };
     expect(addIfNotPresent([dep1], dep1)).toEqual([dep1]);
     expect(addIfNotPresent([dep1], dep2)).toEqual([dep1, dep2]);
 });

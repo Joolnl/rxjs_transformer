@@ -1,5 +1,6 @@
 import * as ts from 'typescript';
-import { differenceWith, compose } from 'ramda';
+import { differenceWith, compose, innerJoin } from 'ramda';
+import { rxjsCreationOperators, rxjsJoinCreationOperators } from './rxjs_operators';
 
 export type Dependency = { identifier: string | string[], location: string };
 export const wrapperLocation = 'rxjs-transformer/dist/rxjs_wrapper';
@@ -59,6 +60,18 @@ export const addIfNotPresent = (array: Dependency[], dependency: Dependency): De
         : [...array, dependency];
 };
 
+const rxjsCreationDependencies: Dependency[] = rxjsCreationOperators
+    .concat(rxjsJoinCreationOperators)
+    .map(operator => ({ identifier: operator, location: 'rxjs' }));
+
+// Add wrapCreationOperator dependency if required.
+export const addWrapCreationOperatorDependency = (reqs: Dependency[]): Dependency[] => {
+    const compare = (l: Dependency, r: Dependency) => l.identifier === r.identifier && l.location === r.location;
+    return innerJoin(compare, reqs, rxjsCreationDependencies).length
+        ? [{ identifier: 'wrapCreationOperator', location: wrapperLocation }, ...reqs]
+        : reqs;
+}
+
 // TODO: ugly fix for now.
 if (!Array.prototype.flatMap) {
     const concat = (x: any, y: any) => x.concat(y);
@@ -74,15 +87,10 @@ export const importDependencies = (source: ts.SourceFile, dependencies: Dependen
         .filter(statement => ts.isImportDeclaration(statement))
         .flatMap(importDeclaration => importDeclarationIdentifiers(importDeclaration as ts.ImportDeclaration));
 
-    // TODO: remove this function
-    const addWrapCreationOperatorForTesting = (reqs: Dependency[]): Dependency[] => {
-        return [{ identifier: 'wrapCreationOperator', location: wrapperLocation }, ...reqs];
-    }
-
     const transform = compose(
         substraction(imported),
         addSendToBackPageDependency,
-        addWrapCreationOperatorForTesting,
+        addWrapCreationOperatorDependency,
         addWrapPipeableOperatorDependency);
 
     return addImportsToSourceFile(source, transform(dependencies));

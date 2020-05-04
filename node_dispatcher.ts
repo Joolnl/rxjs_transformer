@@ -2,11 +2,8 @@ import * as ts from 'typescript';
 import { createWrapCreationExpression, createWrapJoinCreationExpression, wrapSubscribeMethod, wrapPipeStatement } from './operator_wrapper';
 import { extractMetadata } from './metadata';
 import { Dependency, wrapperLocation } from './importer';
+import { rxjsCreationOperators, rxjsJoinCreationOperators } from './rxjs_operators';
 
-export const rxjsCreationOperators = ['ajax', 'bindCallback', 'bindNodeCallback', 'defer', 'empty', 'from', 'fromEvent',
-    'fromEventPattern', 'generate', 'interval', 'of', 'range', 'throwError', 'timer', 'iif'];
-
-export const rxjsJoinCreationOperators = ['combineLatest', 'concat', 'forkJoin', 'merge', 'race', 'zip'];
 
 type NodeType = 'UNCLASSIFIED' | 'RXJS_CREATION_OPERATOR' | 'RXJS_JOIN_CREATION_OPERATOR' | 'RXJS_PIPE' | 'RXJS_SUBSCRIBE';
 type Classifier = (node: ts.Node) => [boolean, NodeType, Dependency];
