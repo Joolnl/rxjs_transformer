@@ -3,6 +3,12 @@
 * RxJS Version 6 (developed on 6.4.0)
 * typescript ~3.5.3
 
+## Known Bugs
+* usage of unexecuted RxJS creation and merge operators like
+combineLatest and of e.g.:
+ ```console.log(of)```
+ results in import errors.
+
 ## Usage
 Install the transformer into an Angular Project (see installation below).
 Install the chrome devtools extension: https://github.com/Joolnl/rxjs-devtools-extension

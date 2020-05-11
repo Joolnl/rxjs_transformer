@@ -23,8 +23,9 @@ export const createWrapCreationExpression = (node: ts.CallExpression): ts.CallEx
     ? node.parent.name.getText()
     : 'anonymous';
   const metaDataExpression = createObservableMetadataExpression(identifier, variableName);
-  const curriedCall = createWrappedCallExpression('wrapCreationOperator', identifier.getText(), [metaDataExpression]);
-  const completeCall = ts.createCall(curriedCall, undefined, node.arguments);
+  // const curriedCall = createWrappedCallExpression('wrapCreationOperator', identifier.getText(), [metaDataExpression]);
+  const curriedCall = createWrappedCallExpression('wrapCreationOperator', 'wrapOperator', [metaDataExpression]);
+  const completeCall = ts.createCall(curriedCall, undefined, [ts.createStringLiteral(identifier.getText()), ...node.arguments]);
   return completeCall;
 };
 

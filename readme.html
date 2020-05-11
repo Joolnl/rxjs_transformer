@@ -10,29 +10,36 @@
 <ul>
 <li data-line="1" class="code-line">Angular 6, 7, 8 (not for Ivy Compiler) (developed on 8.2.2)</li>
 <li data-line="2" class="code-line">RxJS Version 6 (developed on 6.4.0)</li>
-<li data-line="3" class="code-line">typescript ~2.9.2</li>
+<li data-line="3" class="code-line">typescript ~3.5.3</li>
 </ul>
-<h2 id="usage" data-line="5" class="code-line">Usage</h2>
-<p data-line="6" class="code-line">Install the transformer into an Angular Project (see installation below).
+<h2 id="known-bugs" data-line="5" class="code-line">Known Bugs</h2>
+<ul>
+<li data-line="6" class="code-line">usage of unexecuted RxJS creation and merge operators like
+combineLatest and of e.g.:
+<code>console.log(of)</code>
+results in import errors.</li>
+</ul>
+<h2 id="usage" data-line="11" class="code-line">Usage</h2>
+<p data-line="12" class="code-line">Install the transformer into an Angular Project (see installation below).
 Install the chrome devtools extension: <a href="https://github.com/Joolnl/rxjs-devtools-extension" data-href="https://github.com/Joolnl/rxjs-devtools-extension">https://github.com/Joolnl/rxjs-devtools-extension</a></p>
-<p data-line="9" class="code-line">The transformer replaces RxJS nodes in the Typescript AST with wrapper versions,
+<p data-line="15" class="code-line">The transformer replaces RxJS nodes in the Typescript AST with wrapper versions,
 these wrapper versions send metadata to the devtools extension and return the normal
 behavior herafter.</p>
-<p data-line="13" class="code-line">//todo@:switch order of ng add and install transformer</p>
-<h2 id="installation" data-line="14" class="code-line">Installation</h2>
+<p data-line="19" class="code-line">//todo@:switch order of ng add and install transformer</p>
+<h2 id="installation" data-line="20" class="code-line">Installation</h2>
 <ol>
-<li data-line="15" class="code-line">navigate into angular project</li>
-<li data-line="16" class="code-line">install ngx-build-plus
+<li data-line="21" class="code-line">navigate into angular project</li>
+<li data-line="22" class="code-line">install ngx-build-plus
 2a. <code>npm i ngx-build-plus</code> (angular8)
 2b. <code>npm i ngx-build-plus@^7</code> (angular 6 | 7)</li>
-<li data-line="19" class="code-line">add ngx-build-plus to project:
+<li data-line="25" class="code-line">add ngx-build-plus to project:
 3a. <code>ng add ngx-build-plus</code> (angular 8)
 3b. <code>ng add ngx-build-plus@^7</code> (angular 6 | 7)</li>
-<li data-line="22" class="code-line"><code>npm i {placeholder for rxjs-transformer npm package, not yet public}</code></li>
-<li data-line="23" class="code-line">mutate angular.json =&gt; under serve options add &quot;plugin&quot;:  &quot;rxjs-transformer&quot;,</li>
+<li data-line="28" class="code-line"><code>npm i {placeholder for rxjs-transformer npm package, not yet public}</code></li>
+<li data-line="29" class="code-line">mutate angular.json =&gt; under serve options add &quot;plugin&quot;:  &quot;rxjs-transformer&quot;,</li>
 </ol>
-<p data-line="25" class="code-line">e.g. plugin field in serve options:</p>
-<pre><code data-line="27" class="code-line"><code><div>&quot;serve&quot;: {
+<p data-line="31" class="code-line">e.g. plugin field in serve options:</p>
+<pre><code data-line="33" class="code-line"><code><div>&quot;serve&quot;: {
           &quot;builder&quot;: &quot;ngx-build-plus:dev-server&quot;,
           &quot;options&quot;: {
             &quot;plugin&quot;:  &quot;rxjs-transformer&quot;,
@@ -46,16 +53,16 @@ behavior herafter.</p>
         },
 </div></code></code></pre>
 <ol start="6">
-<li data-line="42" class="code-line">RxJS nodes now wrapped on ng serve.</li>
+<li data-line="48" class="code-line">RxJS nodes now wrapped on ng serve.</li>
 </ol>
-<h2 id="todo" data-line="44" class="code-line">TODO</h2>
+<h2 id="todo" data-line="50" class="code-line">TODO</h2>
 <ul>
-<li data-line="45" class="code-line">Improve AngularCompilerPlugin detection in register-transformer.</li>
-<li data-line="46" class="code-line">Look into Ivy Compiler integration for injecting transformer.</li>
-<li data-line="47" class="code-line">RxJS 7 changes impact on node replacement.</li>
-<li data-line="48" class="code-line">Look into splitting rxjs-transformer and rxjs-wrapper.</li>
-<li data-line="49" class="code-line">Support for multiple typescript versions for angular6/7/8</li>
-<li data-line="50" class="code-line">check if installing ngx-build-plus is runnecessary.</li>
+<li data-line="51" class="code-line">Improve AngularCompilerPlugin detection in register-transformer.</li>
+<li data-line="52" class="code-line">Look into Ivy Compiler integration for injecting transformer.</li>
+<li data-line="53" class="code-line">RxJS 7 changes impact on node replacement.</li>
+<li data-line="54" class="code-line">Look into splitting rxjs-transformer and rxjs-wrapper.</li>
+<li data-line="55" class="code-line">Support for multiple typescript versions for angular6/7/8</li>
+<li data-line="56" class="code-line">check if installing ngx-build-plus is runnecessary.</li>
 </ul>
 
 </body></html>

@@ -1,4 +1,5 @@
-import { Observable, MonoTypeOperatorFunction, Subscription, OperatorFunction } from 'rxjs';
+import * as rxjs from 'rxjs';
+import { Observable, MonoTypeOperatorFunction, Subscription, OperatorFunction, of } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import {
     PipeableOperatorMetadata, ObservableMetadata, PipeMetadata, SubscriberMetadata, JoinObservableMetadata
@@ -74,7 +75,7 @@ const createEvent = <T>(id: number, data: T, observable: string, receiver: strin
 
 // Wrap creation operator and return it, send data to backpage.
 export const wrapCreationOperator = <T extends Array<any>, U>(fn: (...args: T) => U, metadata: ObservableMetadata) => (...args: T) => {
-    console.log('Wrapped creation operator ', metadata.identifier, metadata.uuid);
+    console.log('Wrapped creation operator ', metadata.line, metadata.identifier, metadata.uuid);
     const message = createPayloadMessage(metadata, MessageType.observable);
     sendToBackpage(message);
     return fn(...args);
@@ -197,4 +198,15 @@ export const wrapSubscribe = <T, E>(
     }
 
     return source$.subscribe(subscriber);
+};
+
+// Wrap operator to fix reference errors.
+export const wrapOperator = (operator: string, args: any) => {
+    if (Object.keys(rxjs).includes(operator)) {
+        // @ts-ignore
+        return rxjs[operator](args);
+    } else {
+        throw new Error('Invalid RxJS operator type given!');
+    }
+
 };

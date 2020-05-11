@@ -96,7 +96,7 @@ export const dispatchNode = (node: ts.Node): [ts.Node, Dependency | null] => {
         }
     } catch (e) {
         const { file, line, pos } = extractMetadata(node);
-        console.error(`Failed transforming node ${line}:${pos} in ${file}`);
+        // console.error(`Failed transforming node ${line}:${pos} in ${file}`);
         return [node, null];
     }
 
