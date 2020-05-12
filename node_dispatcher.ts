@@ -8,10 +8,11 @@ import { rxjsCreationOperators, rxjsJoinCreationOperators } from './rxjs_operato
 type NodeType = 'UNCLASSIFIED' | 'RXJS_CREATION_OPERATOR' | 'RXJS_JOIN_CREATION_OPERATOR' | 'RXJS_PIPE' | 'RXJS_SUBSCRIBE' | 'OBSERVABLE' | 'SUBJECT';
 type Classifier = (node: ts.Node) => [boolean, NodeType, Dependency];
 
+// TODO: we need the actual observable, with the name and such not the typereference...
 // For classifying TypeReference nodes by given identifiers as type check.
-const isTypeReference = (identifiers: string[], check: NodeType): Classifier => (node) => {
-    if (node.getSourceFile() !== undefined && ts.isTypeReferenceNode(node)) {
-        if (identifiers.includes(node.typeName.getText())) {
+const isPropertyDeclaration = (identifiers: string[], check: NodeType): Classifier => (node) => {
+    if (node.getSourceFile() !== undefined && ts.isPropertyDeclaration(node) && node.type !== undefined) {
+        if (ts.isTypeReferenceNode(node.type) && identifiers.includes(node.type.typeName.getText())) {
             return [true, check, null];
         }
     }
@@ -69,8 +70,8 @@ const classify = (node: ts.Node): [NodeType, Dependency | null] => {
         isRxJSJoinCreationOperator,
         isPipePropertyAccessExpr,
         isSubscribePropertyAccessExpr,
-        isTypeReference(['Observable'], 'OBSERVABLE'),
-        isTypeReference(['Subject', 'AsyncSubject', 'BehaviorSubject', 'ReplaySubject'], 'SUBJECT')
+        isPropertyDeclaration(['Observable'], 'OBSERVABLE'),
+        isPropertyDeclaration(['Subject', 'AsyncSubject', 'BehaviorSubject', 'ReplaySubject'], 'SUBJECT')
     ];
 
     for (let fn of classifiers) {
