@@ -1,7 +1,7 @@
 import * as ts from 'typescript';
 import {
   createPipeableOperatorMetadataExpression, createObservableMetadataExpression,
-  createSubscriberMetadataExpression, createPipeMetadataExpression, createJoinObservableMetadataExpression
+  createSubscriberMetadataExpression, createPipeMetadataExpression, createJoinObservableMetadataExpression, createPropertyDeclarationMetadataExpression
 } from './metadata';
 // import * as uuid from 'uuid/v4';
 import { v4 as uuid } from 'uuid';
@@ -90,6 +90,19 @@ export const wrapSubscribeMethod = (node: ts.CallExpression): ts.CallExpression 
     const metadata = createSubscriberMetadataExpression(node);
 
     return ts.createCall(ts.createIdentifier('wrapSubscribe'), undefined, [source$, metadata, ...args]);
+  } catch (e) {
+    throw e;
+  }
+};
+
+// Wrap TypeReference like Observable and Subject nodes.
+export const wrapPropertyDeclaration = (node: ts.PropertyDeclaration): ts.PropertyDeclaration => {
+  try {
+    const metadata = createPropertyDeclarationMetadataExpression(node);
+    const initializer: ts.Expression[] = node.initializer ? [node.initializer] : [];
+    const call = ts.createCall(ts.createCall(ts.createIdentifier('wrapPropertyDeclaration'), undefined, [metadata]), undefined, initializer);
+    const updated = ts.updateProperty(node, node.decorators, node.modifiers, node.name, node.questionToken, node.type, call);
+    return updated;
   } catch (e) {
     throw e;
   }

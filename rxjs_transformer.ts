@@ -25,7 +25,7 @@ export const rxjsTransformer = (context: ts.TransformationContext) => {
     if (rootNode.fileName.includes('/rxjs_wrapper.ts') && rootNode.fileName.includes('/node_modules')) {
       return rootNode;
     }
-    else if (!rootNode.fileName.includes('main-menu.component.ts')) { //TODO: Remove this.
+    else if (!rootNode.fileName.includes('app.component.ts')) { //TODO: Remove this.
       return rootNode;
     }
     function visitSourceFile(sourceFile: ts.SourceFile): ts.SourceFile {
@@ -59,7 +59,7 @@ export const rxjsTransformer = (context: ts.TransformationContext) => {
       return transformedSourceFile
     } catch (e) {
       console.error(`\nFailed transforming ${rootNode.fileName}`);
-      // console.log(e);
+      console.log(e);
       return rootNode;
     }
 

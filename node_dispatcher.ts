@@ -1,8 +1,8 @@
 import * as ts from 'typescript';
-import { createWrapCreationExpression, createWrapJoinCreationExpression, wrapSubscribeMethod, wrapPipeStatement } from './operator_wrapper';
+import { createWrapCreationExpression, createWrapJoinCreationExpression, wrapSubscribeMethod, wrapPipeStatement, wrapPropertyDeclaration } from './operator_wrapper';
 import { extractMetadata } from './metadata';
 import { Dependency, wrapperLocation } from './importer';
-import { rxjsCreationOperators, rxjsJoinCreationOperators } from './rxjs_operators';
+import { rxjsCreationOperators, rxjsJoinCreationOperators, rxjsSubjectKinds, rxjsObjectKinds } from './rxjs_operators';
 
 
 type NodeType = 'UNCLASSIFIED' | 'RXJS_CREATION_OPERATOR' | 'RXJS_JOIN_CREATION_OPERATOR' | 'RXJS_PIPE' | 'RXJS_SUBSCRIBE' | 'OBSERVABLE' | 'SUBJECT';
@@ -13,6 +13,7 @@ type Classifier = (node: ts.Node) => [boolean, NodeType, Dependency];
 const isPropertyDeclaration = (identifiers: string[], check: NodeType): Classifier => (node) => {
     if (node.getSourceFile() !== undefined && ts.isPropertyDeclaration(node) && node.type !== undefined) {
         if (ts.isTypeReferenceNode(node.type) && identifiers.includes(node.type.typeName.getText())) {
+            console.log(`\nfound ${check}`)
             return [true, check, null];
         }
     }
@@ -70,8 +71,8 @@ const classify = (node: ts.Node): [NodeType, Dependency | null] => {
         isRxJSJoinCreationOperator,
         isPipePropertyAccessExpr,
         isSubscribePropertyAccessExpr,
-        isPropertyDeclaration(['Observable'], 'OBSERVABLE'),
-        isPropertyDeclaration(['Subject', 'AsyncSubject', 'BehaviorSubject', 'ReplaySubject'], 'SUBJECT')
+        isPropertyDeclaration(rxjsObjectKinds, 'OBSERVABLE'),
+        isPropertyDeclaration(rxjsSubjectKinds, 'SUBJECT')
     ];
 
     for (let fn of classifiers) {
@@ -104,10 +105,10 @@ export const dispatchNode = (node: ts.Node): [ts.Node, Dependency | null] => {
                 node = wrapSubscribeMethod(node as ts.CallExpression);
                 return [node, dependency];
             case 'OBSERVABLE':
-                console.log(`We've found an observable.`);
+                node = wrapPropertyDeclaration(node as ts.PropertyDeclaration);
                 return [node, null];
             case 'SUBJECT':
-                console.log(`We've also found a subject matey.`);
+                node = wrapPropertyDeclaration(node as ts.PropertyDeclaration);
                 return [node, null];
             default:
                 throw new Error('Invalid node classification!');
@@ -115,6 +116,7 @@ export const dispatchNode = (node: ts.Node): [ts.Node, Dependency | null] => {
     } catch (e) {
         const { file, line, pos } = extractMetadata(node);
         console.error(`Failed transforming node ${line}:${pos} in ${file}`);
+        console.log(e);
         return [node, null];
     }
 

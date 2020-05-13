@@ -1,8 +1,8 @@
 import * as rxjs from 'rxjs';
-import { Observable, MonoTypeOperatorFunction, Subscription, OperatorFunction, of } from 'rxjs';
+import { Observable, MonoTypeOperatorFunction, Subscription, OperatorFunction, Subject } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import {
-    PipeableOperatorMetadata, ObservableMetadata, PipeMetadata, SubscriberMetadata, JoinObservableMetadata
+    PipeableOperatorMetadata, ObservableMetadata, PipeMetadata, SubscriberMetadata, JoinObservableMetadata, PropertyDeclarationMetadata
 } from './metadata';
 import { pipeFromArray } from 'rxjs/internal/util/pipe';
 declare var chrome: any;
@@ -208,5 +208,11 @@ export const wrapOperator = (operator: string, args: any) => {
     } else {
         throw new Error('Invalid RxJS operator type given!');
     }
+};
 
+// Wrap Object and Subject.
+export const wrapPropertyDeclaration = (metadata: PropertyDeclarationMetadata) => (initialValue: any): any => {
+    console.log(metadata);
+    // console.log(initialValue)
+    return initialValue;
 };

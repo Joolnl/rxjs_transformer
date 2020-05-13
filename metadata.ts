@@ -47,6 +47,15 @@ export interface SubscriberMetadata {
     line: number;
 }
 
+export interface PropertyDeclarationMetadata {
+    uuid: string;
+    identifier: string;
+    kind: string;
+    typeArgument: string[];
+    file: string;
+    line: number;
+}
+
 interface PipeObservablePair {
     pipe: string;
     observable: ts.Identifier;
@@ -63,7 +72,7 @@ const generateId = (filename: string, line: number, pos: number): string => {
 };
 
 // Extract metadata from given call expression.
-export const extractMetadata = (node: ts.Expression): { file: string, line: number, pos: number } => {
+export const extractMetadata = (node: ts.Expression | ts.PropertyDeclaration): { file: string, line: number, pos: number } => {
     const file = node.getSourceFile().fileName;
     const line = node.getSourceFile().getLineAndCharacterOfPosition(node.getStart()).line;
     const pos = node.pos;
@@ -183,7 +192,14 @@ const getObservable = (node: ts.Expression): ts.Identifier => {
         }
 
         return node;    // Return anonymous observable.
+    } else if (node.kind === 99 && ts.isPropertyAccessExpression(node.parent)) {   // Property Access Expression.
+        if (namedObservables.has(node.parent.name.getText())) {
+            return namedObservables.get(node.parent.name.getText());
+        } else {
+            throw new Error('Property access expression node not registered!');
+        }
     } else {
+        console.log(`${node.getText()} ${node.kind} ${node.parent.kind} ${ts.isThisTypeNode(node)}`)
         throw new Error('No Observable found invalid node type!');
     }
 };
@@ -306,4 +322,33 @@ export const createSubscriberMetadataExpression = (node: ts.CallExpression): ts.
     } catch (e) {
         throw e;
     }
+};
+
+// Extract type and typearguments from node.
+const extractTypeMetadata = (node: ts.PropertyDeclaration): [string, string[]] => {
+    if (ts.isTypeReferenceNode(node.type)) {
+        const type = node.type.typeName.getText();
+        const typeArguments = node.type.typeArguments.map(arg => arg.getText());
+        return [type, typeArguments];
+    }
+    return [undefined, undefined];
+};
+
+// Create metadata object literal for PropertyDecl node.
+export const createPropertyDeclarationMetadataExpression = (node: ts.PropertyDeclaration): ts.ObjectLiteralExpression => {
+    const { file, line, pos } = extractMetadata(node.name as ts.Identifier);
+    const [type, typeArguments] = extractTypeMetadata(node);
+    const identifier = node.name.getText();
+    const uuid = generateId(file, line, pos);
+    namedObservables.set(identifier, node.name as ts.Identifier);
+
+
+    return ts.createObjectLiteral([
+        createProperty('uuid', uuid),
+        createProperty('identifier', identifier),
+        createProperty('kind', type),
+        ts.createPropertyAssignment('typeArguments', ts.createArrayLiteral(typeArguments.map(type => ts.createStringLiteral(type)))),
+        createProperty('file', file),
+        createProperty('line', line)
+    ]);
 };

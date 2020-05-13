@@ -153,7 +153,8 @@ export const importDependencies = (source: ts.SourceFile, dependencies: Dependen
         { identifier: 'wrapJoinCreationOperator', location: wrapperLocation },
         { identifier: 'wrapSubscribe', location: wrapperLocation },
         { identifier: 'wrapPipe', location: wrapperLocation },
-        { identifier: 'wrapOperator', location: wrapperLocation}
+        { identifier: 'wrapOperator', location: wrapperLocation },
+        { identifier: 'wrapPropertyDeclaration', location: wrapperLocation }
     ];
     return addImportsToSourceFile(source, hardCodedDependencies);
     // return addImportsToSourceFile(source, transform(dependencies));
