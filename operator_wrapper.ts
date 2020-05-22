@@ -1,7 +1,7 @@
 import * as ts from 'typescript';
 import {
   createPipeableOperatorMetadataExpression, createObservableMetadataExpression,
-  createSubscriberMetadataExpression, createPipeMetadataExpression, createJoinObservableMetadataExpression, createPropertyDeclarationMetadataExpression
+  createSubscriberMetadataExpression, createPipeMetadataExpression, createJoinObservableMetadataExpression, createPropertyDeclarationMetadataExpression, getNodeUUID, getObservableUUIDByName, createObservableSubjectConstructorMetadataExpression
 } from './metadata';
 // import * as uuid from 'uuid/v4';
 import { v4 as uuid } from 'uuid';
@@ -16,13 +16,25 @@ const createWrappedCallExpression: WrappedCallExpressionFn = (wrapperName: strin
   return call;
 };
 
+// Get Property Decleration for given node if existing.
+const getPropertyDeclaration = (node: ts.CallExpression): string => {
+  if (ts.isBinaryExpression(node.parent) && ts.isPropertyAccessExpression(node.parent.left)) {
+    const propertDeclaration = node.parent.left;
+    return getObservableUUIDByName(propertDeclaration.name.getText());
+  }
+
+  return undefined;
+};
+
 // Create wrapped RxJS creation operator expression.
 export const createWrapCreationExpression = (node: ts.CallExpression): ts.CallExpression => {
+  const propertyDeclaration = getPropertyDeclaration(node);
+  console.log(`found property declaration ${propertyDeclaration}`);
   const identifier: ts.Identifier = node.expression as ts.Identifier;
   const variableName = ts.isVariableDeclaration(node.parent)
     ? node.parent.name.getText()
     : 'anonymous';
-  const metaDataExpression = createObservableMetadataExpression(identifier, variableName);
+  const metaDataExpression = createObservableMetadataExpression(identifier, variableName, propertyDeclaration);
   // const curriedCall = createWrappedCallExpression('wrapCreationOperator', identifier.getText(), [metaDataExpression]);
   const curriedCall = createWrappedCallExpression('wrapCreationOperator', 'wrapOperator', [metaDataExpression]);
   const completeCall = ts.createCall(curriedCall, undefined, [ts.createStringLiteral(identifier.getText()), ...node.arguments]);
@@ -31,13 +43,15 @@ export const createWrapCreationExpression = (node: ts.CallExpression): ts.CallEx
 
 // Create wrapped RxJS join creation operator expression.
 export const createWrapJoinCreationExpression = (node: ts.CallExpression): ts.CallExpression => {
+  const propertyDeclaration = getPropertyDeclaration(node);
   const identifier: ts.Identifier = node.expression as ts.Identifier;
   const variableName = ts.isVariableDeclaration(node.parent)
     ? node.parent.name.getText()
     : 'anonymous';
-  const metaDataExpression = createJoinObservableMetadataExpression(identifier, node, variableName);
-  const curriedCall = createWrappedCallExpression('wrapJoinCreationOperator', identifier.getText(), [metaDataExpression]);
-  const completeCall = ts.createCall(curriedCall, undefined, node.arguments);
+  const metaDataExpression = createJoinObservableMetadataExpression(identifier, node, variableName, propertyDeclaration);
+  // const curriedCall = createWrappedCallExpression('wrapJoinCreationOperator', identifier.getText(), [metaDataExpression]);
+  const curriedCall = createWrappedCallExpression('wrapJoinCreationOperator', 'wrapOperator', [metaDataExpression]);
+  const completeCall = ts.createCall(curriedCall, undefined, [ts.createStringLiteral(identifier.getText()), ...node.arguments]);
   return completeCall;
 };
 
@@ -98,12 +112,26 @@ export const wrapSubscribeMethod = (node: ts.CallExpression): ts.CallExpression 
 // Wrap TypeReference like Observable and Subject nodes.
 export const wrapPropertyDeclaration = (node: ts.PropertyDeclaration): ts.PropertyDeclaration => {
   try {
-    const metadata = createPropertyDeclarationMetadataExpression(node);
     const initializer: ts.Expression[] = node.initializer ? [node.initializer] : [];
+    // TODO: possible it is uninitialized 
+    const observableUUID = initializer.length ? getNodeUUID(initializer[0]) : undefined;
+    const metadata = createPropertyDeclarationMetadataExpression(node, observableUUID);
     const call = ts.createCall(ts.createCall(ts.createIdentifier('wrapPropertyDeclaration'), undefined, [metadata]), undefined, initializer);
     const updated = ts.updateProperty(node, node.decorators, node.modifiers, node.name, node.questionToken, node.type, call);
     return updated;
   } catch (e) {
     throw e;
   }
+};
+
+// Wrap Object or Subject constructor.
+export const wrapObservableSubjectConstructor = (node: ts.NewExpression): ts.CallExpression => {
+  const propertyDecl = ts.isPropertyDeclaration(node.parent) && ts.isIdentifier(node.parent.name)
+    ? node.parent.name.getText()
+    : undefined;
+  const variableName = ts.isVariableDeclaration(node.parent)
+    ? node.parent.name.getText()
+    : 'anonymous';
+  const metadata = createObservableSubjectConstructorMetadataExpression(node, variableName, propertyDecl);
+  return ts.createCall(ts.createIdentifier('wrapObservableSubjectConstructor'), undefined, [metadata, node.expression]);
 };

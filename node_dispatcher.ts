@@ -1,11 +1,12 @@
 import * as ts from 'typescript';
-import { createWrapCreationExpression, createWrapJoinCreationExpression, wrapSubscribeMethod, wrapPipeStatement, wrapPropertyDeclaration } from './operator_wrapper';
+import { createWrapCreationExpression, createWrapJoinCreationExpression, wrapSubscribeMethod, wrapPipeStatement, wrapPropertyDeclaration, wrapObservableSubjectConstructor } from './operator_wrapper';
 import { extractMetadata } from './metadata';
 import { Dependency, wrapperLocation } from './importer';
 import { rxjsCreationOperators, rxjsJoinCreationOperators, rxjsSubjectKinds, rxjsObjectKinds } from './rxjs_operators';
 
 
-type NodeType = 'UNCLASSIFIED' | 'RXJS_CREATION_OPERATOR' | 'RXJS_JOIN_CREATION_OPERATOR' | 'RXJS_PIPE' | 'RXJS_SUBSCRIBE' | 'OBSERVABLE' | 'SUBJECT';
+type NodeType = 'UNCLASSIFIED' | 'RXJS_CREATION_OPERATOR' | 'RXJS_JOIN_CREATION_OPERATOR' | 'RXJS_PIPE' | 'RXJS_SUBSCRIBE' | 'OBSERVABLE' | 'SUBJECT'
+    | 'RXJS_OBJECT_SUBJECT_CONSTRUCTOR';
 type Classifier = (node: ts.Node) => [boolean, NodeType, Dependency];
 
 // TODO: we need the actual observable, with the name and such not the typereference...
@@ -13,7 +14,6 @@ type Classifier = (node: ts.Node) => [boolean, NodeType, Dependency];
 const isPropertyDeclaration = (identifiers: string[], check: NodeType): Classifier => (node) => {
     if (node.getSourceFile() !== undefined && ts.isPropertyDeclaration(node) && node.type !== undefined) {
         if (ts.isTypeReferenceNode(node.type) && identifiers.includes(node.type.typeName.getText())) {
-            console.log(`\nfound ${check}`)
             return [true, check, null];
         }
     }
@@ -39,6 +39,19 @@ const isRxJSJoinCreationOperator: Classifier = (node) => {
         const dependency = { identifier: operator, location: 'rxjs' };
         return match ? [true, 'RXJS_JOIN_CREATION_OPERATOR', dependency] : [false, null, null];
     }
+    return [false, null, null];
+};
+
+// For classifying RxJS Object en Subject constructor nodes.
+const isObjectOrSubjectConstructor: Classifier = (node) => {
+    if (ts.isNewExpression(node) && ts.isIdentifier(node.expression) && node.expression.getSourceFile !== undefined) {
+        console.log(node.parent.getText())
+        if ([...rxjsObjectKinds, ...rxjsSubjectKinds].includes(node.expression.getText())) {
+            const dependency = { identifier: node.expression.getText(), location: 'rxjs' };
+            return [true, 'RXJS_OBJECT_SUBJECT_CONSTRUCTOR', dependency];
+        }
+    }
+
     return [false, null, null];
 };
 
@@ -71,6 +84,7 @@ const classify = (node: ts.Node): [NodeType, Dependency | null] => {
         isRxJSJoinCreationOperator,
         isPipePropertyAccessExpr,
         isSubscribePropertyAccessExpr,
+        isObjectOrSubjectConstructor,
         isPropertyDeclaration(rxjsObjectKinds, 'OBSERVABLE'),
         isPropertyDeclaration(rxjsSubjectKinds, 'SUBJECT')
     ];
@@ -104,9 +118,10 @@ export const dispatchNode = (node: ts.Node): [ts.Node, Dependency | null] => {
             case 'RXJS_SUBSCRIBE':
                 node = wrapSubscribeMethod(node as ts.CallExpression);
                 return [node, dependency];
+            case 'RXJS_OBJECT_SUBJECT_CONSTRUCTOR':
+                node = wrapObservableSubjectConstructor(node as ts.NewExpression);
+                return [node, dependency];
             case 'OBSERVABLE':
-                node = wrapPropertyDeclaration(node as ts.PropertyDeclaration);
-                return [node, null];
             case 'SUBJECT':
                 node = wrapPropertyDeclaration(node as ts.PropertyDeclaration);
                 return [node, null];

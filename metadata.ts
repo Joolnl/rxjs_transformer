@@ -9,6 +9,7 @@ export interface ObservableMetadata {
     file: string;
     line: number;
     pos?: number;
+    propertyDeclaration: string;
 }
 
 export interface JoinObservableMetadata {
@@ -19,6 +20,7 @@ export interface JoinObservableMetadata {
     file: string;
     line: number;
     pos?: number;
+    propertyDeclaration: string;
 }
 
 export interface PipeMetadata {
@@ -40,6 +42,7 @@ export interface PipeableOperatorMetadata {
 }
 
 export interface SubscriberMetadata {
+    uuid: string;
     observable: string;
     pipes: Array<string>;
     func: string;
@@ -47,13 +50,27 @@ export interface SubscriberMetadata {
     line: number;
 }
 
+export interface TemplateSubscriberMetadata {
+    observable: string;
+}
+
 export interface PropertyDeclarationMetadata {
     uuid: string;
     identifier: string;
+    observable: string;
     kind: string;
     typeArgument: string[];
     file: string;
     line: number;
+}
+
+export interface ObservableSubjectConstructorMetadata {
+    uuid: string;
+    type?: string;
+    file: string;
+    line: number;
+    propertyDeclaration: string;
+    typeArgument: string[];
 }
 
 interface PipeObservablePair {
@@ -82,7 +99,7 @@ export const extractMetadata = (node: ts.Expression | ts.PropertyDeclaration): {
 const createProperty = (name: string, value: any) => ts.createPropertyAssignment(name, ts.createLiteral(value || ''));
 
 // Create metadata object literal expression from expression and operator.
-export const createObservableMetadataExpression = (node: ts.Identifier, variableName: string): ts.ObjectLiteralExpression => {
+export const createObservableMetadataExpression = (node: ts.Identifier, variableName: string, propertyDeclaration: string): ts.ObjectLiteralExpression => {
     const { file, line, pos } = extractMetadata(node);
     const uuid = generateId(file, line, pos);
 
@@ -95,7 +112,8 @@ export const createObservableMetadataExpression = (node: ts.Identifier, variable
         createProperty('type', node.getText()),
         createProperty('identifier', variableName),
         createProperty('file', file),
-        createProperty('line', line)
+        createProperty('line', line),
+        createProperty('propertyDeclaration', propertyDeclaration)
     ]);
 };
 
@@ -157,7 +175,8 @@ const createBaseObservableArrayLiteral = (baseObservables: Array<BaseObservable>
 export const createJoinObservableMetadataExpression = (
     node: ts.Identifier,
     call: ts.CallExpression,
-    variableName: string
+    variableName: string,
+    propertyDeclaration: string
 ): ts.ObjectLiteralExpression => {
     const { file, line, pos } = extractMetadata(node);
     const uuid = generateId(file, line, pos);
@@ -172,7 +191,8 @@ export const createJoinObservableMetadataExpression = (
         ts.createPropertyAssignment('observables', baseObservables),
         createProperty('identifier', variableName),
         createProperty('file', file),
-        createProperty('line', line)
+        createProperty('line', line),
+        createProperty('propertyDeclaration', propertyDeclaration)
     ]);
 };
 
@@ -181,14 +201,12 @@ const getObservable = (node: ts.Expression): ts.Identifier => {
     if (ts.isPropertyAccessExpression(node) || ts.isCallExpression(node)) {
         return getObservable(node.expression);
     } else if (ts.isIdentifier(node)) {
-        if (ts.isPropertyAccessExpression(node.parent)) {   // This can be either a pipe or an observable.
+        if (ts.isPropertyAccessExpression(node.parent)) {
             if (namedPipes.has(node.getText())) {
-                return namedPipes.get(node.getText()).observable;
+                return namedPipes.get(node.getText()).observable;   // It's a pipe.
             } else if (namedObservables.has(node.getText())) {
-                return namedObservables.get(node.getText());
-            } else {
-                throw new Error(`No Observable found for ${node.getText()}`);
-            }
+                return namedObservables.get(node.getText());        // It's an observable.
+            } 
         }
 
         return node;    // Return anonymous observable.
@@ -199,7 +217,6 @@ const getObservable = (node: ts.Expression): ts.Identifier => {
             throw new Error('Property access expression node not registered!');
         }
     } else {
-        console.log(`${node.getText()} ${node.kind} ${node.parent.kind} ${ts.isThisTypeNode(node)}`)
         throw new Error('No Observable found invalid node type!');
     }
 };
@@ -307,12 +324,15 @@ const createArrayLiteralProperty = (name: string, pipes: Array<Pipe>): ts.Proper
 // Create subscribe metadata object literal.
 export const createSubscriberMetadataExpression = (node: ts.CallExpression): ts.ObjectLiteralExpression => {
     try {
-        const { file, line } = extractMetadata(node);
+        const { file, line, pos } = extractMetadata(node);
+        const uuid = generateId(file, line, pos);
         const observableMetadata = extractMetadata(getObservable(node));
         const observableUUID = generateId(observableMetadata.file, observableMetadata.line, observableMetadata.pos);
         const pipes = createArrayLiteralProperty('pipes', getPipeArray(node));
+        console.log('in subscribe', observableMetadata.file, observableMetadata.line, observableMetadata.pos, getObservable(node).getText())
 
         return ts.createObjectLiteral([
+            createProperty('uuid', uuid),
             createProperty('observable', observableUUID),
             pipes,
             createProperty('function', 'testFn'),
@@ -335,7 +355,7 @@ const extractTypeMetadata = (node: ts.PropertyDeclaration): [string, string[]] =
 };
 
 // Create metadata object literal for PropertyDecl node.
-export const createPropertyDeclarationMetadataExpression = (node: ts.PropertyDeclaration): ts.ObjectLiteralExpression => {
+export const createPropertyDeclarationMetadataExpression = (node: ts.PropertyDeclaration, observable: string): ts.ObjectLiteralExpression => {
     const { file, line, pos } = extractMetadata(node.name as ts.Identifier);
     const [type, typeArguments] = extractTypeMetadata(node);
     const identifier = node.name.getText();
@@ -346,9 +366,43 @@ export const createPropertyDeclarationMetadataExpression = (node: ts.PropertyDec
     return ts.createObjectLiteral([
         createProperty('uuid', uuid),
         createProperty('identifier', identifier),
+        createProperty('observable', observable),
         createProperty('kind', type),
         ts.createPropertyAssignment('typeArguments', ts.createArrayLiteral(typeArguments.map(type => ts.createStringLiteral(type)))),
         createProperty('file', file),
         createProperty('line', line)
+    ]);
+};
+
+export const getNodeUUID = (node: ts.Expression): string => {
+    const { file, line, pos } = extractMetadata(node);
+    const uuid = generateId(file, line, pos);
+    return uuid;
+};
+
+export const getObservableUUIDByName = (observable: string): string => {
+    return getNodeUUID(namedObservables.get(observable));
+}
+
+// Create object literal expression containing metadata from Object and Subject constructor expression.
+export const createObservableSubjectConstructorMetadataExpression = (node: ts.NewExpression, variableName: string, propertyDecl: string): ts.ObjectLiteralExpression => {
+    const { file, line, pos } = extractMetadata(node.expression);
+    const uuid = generateId(file, line, pos);
+    const type = node.expression.getText();
+    const typeArgs = node.typeArguments.map(arg => arg.getText());
+    const propertyDeclUUID = propertyDecl ? getObservableUUIDByName(propertyDecl) : undefined;
+
+    if (variableName !== 'anonymous') {
+        namedObservables.set(variableName, node.expression as ts.Identifier);
+    }
+
+    return ts.createObjectLiteral([
+        createProperty('uuid', uuid),
+        createProperty('identifier', node.expression.getText()),
+        createProperty('type', type),
+        createProperty('file', file),
+        createProperty('line', line),
+        createProperty('propertyDeclaration', propertyDeclUUID),
+        ts.createPropertyAssignment('typeArguments', ts.createArrayLiteral(typeArgs.map(type => ts.createStringLiteral(type)))),
     ]);
 };
