@@ -9,8 +9,6 @@ const fetchNodeFromSourceFile = (node: ts.SourceFile | ts.Node): ts.Node => {
     }
 };
 
-type Test = ts.Node;
-
 // Create ts.Node from given typescript code.
 export const createNode = <T extends ts.Node>(code: string, type: number): T => {
     const sourcefile = ts.createSourceFile('test.ts', code, ts.ScriptTarget.ES2015, true);

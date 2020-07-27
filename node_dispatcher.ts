@@ -31,7 +31,7 @@ const isPropertyDeclaration = (identifiers: string[], check: NodeType): Classifi
 };
 
 // For classifiying RxJS Creation operator nodes.
-const isRxJSCreationOperator: Classifier = (node) => {
+export const isRxJSCreationOperator: Classifier = (node) => {
     if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.getSourceFile() !== undefined) {
         const operator = node.expression.getText();
         const match = rxjsCreationOperators.some(rxjsOperator => rxjsOperator === operator);
