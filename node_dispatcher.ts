@@ -11,6 +11,14 @@ type NodeType = 'UNCLASSIFIED' | 'RXJS_CREATION_OPERATOR' | 'RXJS_JOIN_CREATION_
     
 type Classifier = (node: ts.Node) => [boolean, NodeType, Dependency];
 
+const classifierTemplate = (classifier: (node: ts.Node) => boolean) => (node: ts.Node): boolean => {
+    if (node.getSourceFile() !== undefined) {
+        if (classifier(node)) {
+            return true;
+        }
+    }
+};
+
 // TODO: we need the actual observable, with the name and such not the typereference...
 // For classifying TypeReference nodes by given identifiers as type check.
 const isPropertyDeclaration = (identifiers: string[], check: NodeType): Classifier => (node) => {

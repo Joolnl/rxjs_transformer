@@ -161,3 +161,4 @@ export const wrapObservableSubjectConstructor = (node: ts.NewExpression): ts.Cal
   const metadata = createObservableSubjectConstructorMetadataExpression(node, variableName, propertyDecl);
   return ts.createCall(ts.createIdentifier('wrapObservableSubjectConstructor'), undefined, [metadata, node.expression]);
 };
+
