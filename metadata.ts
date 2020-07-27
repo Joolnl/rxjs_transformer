@@ -210,13 +210,14 @@ const getObservable = (node: ts.Expression): ts.Identifier => {
         }
 
         return node;    // Return anonymous observable.
-    } else if (node.kind === 99 && ts.isPropertyAccessExpression(node.parent)) {   // Property Access Expression.
+    } else if (node.kind === 101 && ts.isPropertyAccessExpression(node.parent)) {   // Property Access Expression.
         if (namedObservables.has(node.parent.name.getText())) {
             return namedObservables.get(node.parent.name.getText());
         } else {
             throw new Error('Property access expression node not registered!');
         }
     } else {
+        console.log(`node with ${node.kind} ${node.getText()}`)
         throw new Error('No Observable found invalid node type!');
     }
 };
@@ -360,6 +361,7 @@ export const createPropertyDeclarationMetadataExpression = (node: ts.PropertyDec
     const [type, typeArguments] = extractTypeMetadata(node);
     const identifier = node.name.getText();
     const uuid = generateId(file, line, pos);
+    console.log(`setting observable ${identifier} ${node.name.getText()} ${node.name.pos}`)
     namedObservables.set(identifier, node.name as ts.Identifier);
 
 
@@ -381,6 +383,8 @@ export const getNodeUUID = (node: ts.Expression): string => {
 };
 
 export const getObservableUUIDByName = (observable: string): string => {
+    const test = namedObservables.get(observable);
+    console.log(`@@@ ${test.getText()} pos:${test.pos}`)
     return getNodeUUID(namedObservables.get(observable));
 }
 

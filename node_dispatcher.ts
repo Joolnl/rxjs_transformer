@@ -7,6 +7,8 @@ import { rxjsCreationOperators, rxjsJoinCreationOperators, rxjsSubjectKinds, rxj
 
 type NodeType = 'UNCLASSIFIED' | 'RXJS_CREATION_OPERATOR' | 'RXJS_JOIN_CREATION_OPERATOR' | 'RXJS_PIPE' | 'RXJS_SUBSCRIBE' | 'OBSERVABLE' | 'SUBJECT'
     | 'RXJS_OBJECT_SUBJECT_CONSTRUCTOR';
+
+    
 type Classifier = (node: ts.Node) => [boolean, NodeType, Dependency];
 
 // TODO: we need the actual observable, with the name and such not the typereference...

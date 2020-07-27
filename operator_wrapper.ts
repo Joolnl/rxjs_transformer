@@ -109,14 +109,40 @@ export const wrapSubscribeMethod = (node: ts.CallExpression): ts.CallExpression 
   }
 };
 
+// Get the initializer of a PropertyDeclaration.
+const getInitializer = (node: ts.Expression): ts.Identifier => {
+  if (node) {
+    if (ts.isCallExpression(node) || ts.isPropertyAccessExpression(node)) {
+      return getInitializer(node.expression);
+    } else if (ts.isIdentifier(node)) {
+      return node;
+    } else if (node.kind === 101) {
+      if (ts.isPropertyAccessExpression(node.parent) && ts.isIdentifier(node.parent.name)) {
+        return node.parent.name;
+      }
+    }
+  }
+
+  return undefined;
+}
+
 // Wrap TypeReference like Observable and Subject nodes.
 export const wrapPropertyDeclaration = (node: ts.PropertyDeclaration): ts.PropertyDeclaration => {
   try {
-    const initializer: ts.Expression[] = node.initializer ? [node.initializer] : [];
+    // const initializer: ts.Expression[] = node.initializer ? [node.initializer] : [];
+    const initializerIdentifier = getInitializer(node.initializer);
+    // test && console.log(`getInitializer returned ${test.getText()}`);
+    // console.log(`the expression is ${initializer[0].getText()}`);
     // TODO: possible it is uninitialized 
-    const observableUUID = initializer.length ? getNodeUUID(initializer[0]) : undefined;
+    // TODO: the observableUUID doesn't seem to match.
+    // console.log(`getting the observable UUID from ${initializer[0]}`)
+    // const observableUUID = initializer.length ? getNodeUUID(initializer[0]) : undefined;
+    // const observableUUID = initializerIdentifier ? getNodeUUID(initializerIdentifier) : undefined;
+    const observableUUID = initializerIdentifier ? getObservableUUIDByName(initializerIdentifier.getText()) : undefined;
+    initializerIdentifier && console.log(`got observable uuid ${observableUUID} for ${initializerIdentifier.getText()} and ${getObservableUUIDByName(initializerIdentifier.getText())}`)
+    
     const metadata = createPropertyDeclarationMetadataExpression(node, observableUUID);
-    const call = ts.createCall(ts.createCall(ts.createIdentifier('wrapPropertyDeclaration'), undefined, [metadata]), undefined, initializer);
+    const call = ts.createCall(ts.createCall(ts.createIdentifier('wrapPropertyDeclaration'), undefined, [metadata]), undefined, [node.initializer]);
     const updated = ts.updateProperty(node, node.decorators, node.modifiers, node.name, node.questionToken, node.type, call);
     return updated;
   } catch (e) {
