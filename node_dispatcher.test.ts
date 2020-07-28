@@ -1,4 +1,4 @@
-import { isRxJSCreationOperator, Touched, isRxJSJoinCreationOperator, classify } from './node_dispatcher_ref';
+import { isRxJSCreationOperator, Touched, isRxJSJoinCreationOperator, classify, dispatch } from './node_dispatcher_ref';
 import { createNode } from './compiler_helper';
 import * as ts from 'typescript';
 
@@ -35,3 +35,14 @@ test('classify should return the appropriate NodeType for given node.', () => {
     const type3 = classify(node3);
     expect(type3).toEqual('UNCLASSIFIED');
 });
+
+test('dispatch node should return unaltered unlcassified nodes.', () => {
+    const node = createNode<ts.NewExpression>(`new Banana<Apple>('grape');`, ts.SyntaxKind.NewExpression);
+    const result = dispatch(node);
+    expect(result).toEqual(node);
+
+    const node2 = createNode<ts.CallExpression>(`of(500);`, ts.SyntaxKind.CallExpression) as Touched;
+    node2.touched = true;
+    const result2 = dispatch(node2);
+    expect(node2).toEqual(result2);
+})
