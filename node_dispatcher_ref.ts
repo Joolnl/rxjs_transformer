@@ -1,5 +1,6 @@
 import * as ts from 'typescript';
 import { rxjsCreationOperators, rxjsJoinCreationOperators } from './rxjs_operators';
+import { wrapRxJSCreationOperator, wrapRxJSJoinCreationOperator } from './operator_wrapper_ref';
 
 type NodeType = 'UNCLASSIFIED' | 'RXJS_CREATION_OPERATOR' | 'RXJS_JOIN_CREATION_OPERATOR' | 'RXJS_PIPE' | 'RXJS_SUBSCRIBE' | 'OBSERVABLE' | 'SUBJECT'
     | 'RXJS_OBJECT_SUBJECT_CONSTRUCTOR';
@@ -60,6 +61,10 @@ export const dispatch = (node: Touched<ts.Node>): ts.Node => {
     switch (classification) {
         case 'UNCLASSIFIED':
             return node;
+        case 'RXJS_CREATION_OPERATOR':
+            return wrapRxJSCreationOperator(node as ts.CallExpression);
+        case 'RXJS_JOIN_CREATION_OPERATOR':
+            return wrapRxJSJoinCreationOperator(node as ts.CallExpression);
         default:
             return node;
     }
