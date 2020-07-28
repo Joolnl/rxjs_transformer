@@ -5,7 +5,7 @@ import * as ts from 'typescript';
 
 test('isRxJSCreationOperator should identify RxJS creation nodes.', () => {
     const node = createNode<ts.CallExpression>(`of(1);`, ts.SyntaxKind.CallExpression);
-    const touched = Object.create(node) as Touched;
+    const touched = Object.create(node) as Touched<ts.CallExpression>;
     touched.touched = true;
     expect(isRxJSCreationOperator(node)).toBe(true);
     expect(isRxJSCreationOperator(touched)).toBe(false);
