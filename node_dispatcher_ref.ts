@@ -5,14 +5,15 @@ type NodeType = 'UNCLASSIFIED' | 'RXJS_CREATION_OPERATOR' | 'RXJS_JOIN_CREATION_
     | 'RXJS_OBJECT_SUBJECT_CONSTRUCTOR';
 
 // Make node touchable by casting it to Touched.
-export interface Touched extends ts.Node {
+export type Touched<T extends ts.Node> = T & {
     touched?: boolean;
-}
+};
+
 
 type Classifier = (node: ts.Node) => boolean;
 
-// Wrapper function to check shared node classification aspects.
-const classifierTemplate = (classifier: (node: Touched) => boolean) => (node: Touched): boolean => {
+// Wrapper function to check shared node classification aspects, curryable with classifier fn.
+const classifierTemplate = <T extends ts.Node>(classifier: (node: Touched<T>) => boolean) => (node: Touched<T>): boolean => {
     if (node.getSourceFile() !== undefined && !node.touched) {
         if (classifier(node)) {
             return true;
@@ -39,15 +40,27 @@ export const isRxJSJoinCreationOperator: Classifier = classifierTemplate((node) 
 });
 
 // type ClassifierNodeTypeSet
-export const classify = (node: Touched): NodeType => {
+export const classify = (node: Touched<ts.Node>): NodeType => {
     const classifierMap: [Classifier, NodeType][] = [
         [isRxJSCreationOperator, 'RXJS_CREATION_OPERATOR'],
         [isRxJSJoinCreationOperator, 'RXJS_JOIN_CREATION_OPERATOR'],
     ];
 
-    const classifications =  classifierMap
+    const classifications = classifierMap
         .filter(tuple => tuple[0](node))
         .map(tuple => tuple[1]);
-    
+
     return classifications.length ? classifications.pop() : 'UNCLASSIFIED';
+};
+
+// Classify node, dispatch to appropriate wrapper function.
+export const dispatch = (node: Touched<ts.Node>): ts.Node => {
+    const classification = classify(node);
+
+    switch (classification) {
+        case 'UNCLASSIFIED':
+            return node;
+        default:
+            return node;
+    }
 };
