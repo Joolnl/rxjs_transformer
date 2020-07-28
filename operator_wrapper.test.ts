@@ -25,4 +25,5 @@ test('wrapRxJSJoinCreationOperator should create wrapped node from RxJS Join Cre
     expect(ts.isCallExpression(result)).toBe(true);
     expect(ts.isCallExpression(result.expression)).toBe(true);
     expect(stringResult).toMatch(/wrapJoinOperator\(merge,.+\)\(interval\(100\), of\(\'asdf\'\)\)/);   //Matches wrapJoinOperator with any metadata object.
+    console.log(stringResult);
 });

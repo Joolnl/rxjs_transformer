@@ -1,5 +1,6 @@
 import * as ts from 'typescript';
 import { Touched } from './node_dispatcher_ref';
+import { createMetadataObject, RxJSPart } from './metadata_ref';
 
 // Mark node as touched so it won't be mutated again.
 export const touch = <T extends ts.Node>(node: ts.Node): Touched<T> => {
@@ -10,7 +11,7 @@ export const touch = <T extends ts.Node>(node: ts.Node): Touched<T> => {
 
 // Template function to wrapp call expression nodes. Returns wrapped node in curried style.
 const wrapCallExpressionNode = (call: string) => (node: ts.CallExpression, ...args: any[]) => {
-    const metadata = ts.createNull();
+    const metadata = createMetadataObject(node, RxJSPart.Observable);
     const identifier = node.expression as ts.Identifier;
     const callArgs = node.arguments;
     return ts.createCall(ts.createCall(ts.createIdentifier(call), undefined, [touch(identifier), metadata]), undefined, callArgs);
