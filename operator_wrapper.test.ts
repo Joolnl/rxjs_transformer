@@ -1,4 +1,4 @@
-import { touch, wrapRxJSCreationOperator, wrapRxJSJoinCreationOperator } from "./operator_wrapper_ref";
+import { touch, wrapRxJSCreationOperator, wrapRxJSJoinCreationOperator, wrapObjectSubjectConstructor } from "./operator_wrapper_ref";
 import { createNode, printNode } from './compiler_helper';
 import * as ts from 'typescript';
 
@@ -25,5 +25,11 @@ test('wrapRxJSJoinCreationOperator should create wrapped node from RxJS Join Cre
     expect(ts.isCallExpression(result)).toBe(true);
     expect(ts.isCallExpression(result.expression)).toBe(true);
     expect(stringResult).toMatch(/wrapJoinOperator\(merge,.+\)\(interval\(100\), of\(\'asdf\'\)\)/);   //Matches wrapJoinOperator with any metadata object.
-    console.log(stringResult);
+});
+
+test('wrapConstructorNode should create wrapped call of constructor call.', () => {
+    const [node, sourceFile] = createNode<ts.NewExpression>(`new Observable<number>(1);`, ts.SyntaxKind.NewExpression);
+    const result = wrapObjectSubjectConstructor(node);
+    const stringResult = printNode(result, sourceFile);
+    expect(stringResult).toMatch(/wrapConstructor\(new Observable<number>\(1\)\)\({.+}\)/);
 });
