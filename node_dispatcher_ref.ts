@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
-import { rxjsCreationOperators, rxjsJoinCreationOperators } from './rxjs_operators';
-import { wrapRxJSCreationOperator, wrapRxJSJoinCreationOperator } from './operator_wrapper_ref';
+import { rxjsCreationOperators, rxjsJoinCreationOperators, rxjsObjectKinds, rxjsSubjectKinds } from './rxjs_operators';
+import { wrapRxJSCreationOperator, wrapRxJSJoinCreationOperator, wrapObjectSubjectConstructor } from './operator_wrapper_ref';
 
 type NodeType = 'UNCLASSIFIED' | 'RXJS_CREATION_OPERATOR' | 'RXJS_JOIN_CREATION_OPERATOR' | 'RXJS_PIPE' | 'RXJS_SUBSCRIBE' | 'OBSERVABLE' | 'SUBJECT'
     | 'RXJS_OBJECT_SUBJECT_CONSTRUCTOR';
@@ -38,6 +38,16 @@ export const isRxJSJoinCreationOperator: Classifier = classifierTemplate((node) 
             return true;
         }
     }
+    return false;
+});
+
+export const isObjectOrSubjectConstructor: Classifier = classifierTemplate((node) => {
+    if (ts.isNewExpression(node) && ts.isIdentifier(node.expression)) {
+        if ([...rxjsObjectKinds, ...rxjsSubjectKinds].some(operator => operator === node.expression.getText())) {
+            return true;
+        }
+    }
+    return false;
 });
 
 // type ClassifierNodeTypeSet
@@ -45,6 +55,7 @@ export const classify = (node: Touched<ts.Node>): NodeType => {
     const classifierMap: [Classifier, NodeType][] = [
         [isRxJSCreationOperator, 'RXJS_CREATION_OPERATOR'],
         [isRxJSJoinCreationOperator, 'RXJS_JOIN_CREATION_OPERATOR'],
+        [isObjectOrSubjectConstructor, 'RXJS_OBJECT_SUBJECT_CONSTRUCTOR']
     ];
 
     const classifications = classifierMap
@@ -65,6 +76,8 @@ export const dispatch = (node: Touched<ts.Node>): ts.Node => {
             return wrapRxJSCreationOperator(node as ts.CallExpression);
         case 'RXJS_JOIN_CREATION_OPERATOR':
             return wrapRxJSJoinCreationOperator(node as ts.CallExpression);
+        case 'RXJS_OBJECT_SUBJECT_CONSTRUCTOR':
+            return wrapObjectSubjectConstructor(node as ts.NewExpression);
         default:
             return node;
     }

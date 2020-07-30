@@ -1,4 +1,4 @@
-import { isRxJSCreationOperator, Touched, isRxJSJoinCreationOperator, classify, dispatch } from './node_dispatcher_ref';
+import { isRxJSCreationOperator, Touched, isRxJSJoinCreationOperator, classify, dispatch, isObjectOrSubjectConstructor } from './node_dispatcher_ref';
 import { createNode, printNode } from './compiler_helper';
 import * as ts from 'typescript';
 
@@ -20,6 +20,18 @@ test('isRxjsJoinCreationOperator should identify RxJS join creation nodes.', () 
 
     const [node2] = createNode<ts.CallExpression>(`notMergeFunction(arg1, arg2);`, ts.SyntaxKind.CallExpression);
     expect(isRxJSJoinCreationOperator(node2)).toBe(false);
+});
+
+test('isObjectOrSubjectConstructor should identifiy RxJS Subject or Object contructor nodes.', () => {
+    const [node] = createNode<ts.NewExpression>(`new Observable();`, ts.SyntaxKind.NewExpression);
+    const [node2] = createNode<ts.NewExpression>(`new Observable<number>();`, ts.SyntaxKind.NewExpression);
+    const [node3] = createNode<ts.NewExpression>(`new BehaviorSubject<string>();`, ts.SyntaxKind.NewExpression);
+    const [node4] = createNode<ts.NewExpression>(`new NoRxJSSubject<string>();`, ts.SyntaxKind.NewExpression);
+
+    expect(isObjectOrSubjectConstructor(node)).toBe(true);
+    expect(isObjectOrSubjectConstructor(node2)).toBe(true);
+    expect(isObjectOrSubjectConstructor(node3)).toBe(true);
+    expect(isObjectOrSubjectConstructor(node4)).toBe(false);
 });
 
 test('classify should return the appropriate NodeType for given node.', () => {
