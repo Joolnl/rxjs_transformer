@@ -1,9 +1,6 @@
 import * as ts from 'typescript';
 import { rxjsCreationOperators, rxjsJoinCreationOperators, rxjsObjectKinds, rxjsSubjectKinds } from './rxjs_operators';
-import { wrapRxJSCreationOperator, wrapRxJSJoinCreationOperator, wrapObjectSubjectConstructor } from './operator_wrapper_ref';
-
-type NodeType = 'UNCLASSIFIED' | 'RXJS_CREATION_OPERATOR' | 'RXJS_JOIN_CREATION_OPERATOR' | 'RXJS_PIPE' | 'RXJS_SUBSCRIBE' | 'OBSERVABLE' | 'SUBJECT'
-    | 'RXJS_OBJECT_SUBJECT_CONSTRUCTOR';
+import { wrapRxJSNode } from './operator_wrapper_ref';
 
 // Make node touchable by casting it to Touched.
 export type Touched<T extends ts.Node> = T & {
@@ -50,35 +47,24 @@ export const isObjectOrSubjectConstructor: Classifier = classifierTemplate((node
     return false;
 });
 
-// type ClassifierNodeTypeSet
-export const classify = (node: Touched<ts.Node>): NodeType => {
-    const classifierMap: [Classifier, NodeType][] = [
-        [isRxJSCreationOperator, 'RXJS_CREATION_OPERATOR'],
-        [isRxJSJoinCreationOperator, 'RXJS_JOIN_CREATION_OPERATOR'],
-        [isObjectOrSubjectConstructor, 'RXJS_OBJECT_SUBJECT_CONSTRUCTOR']
+// Classify node by set of classifiers, if classified return true.
+export const classify = (node: Touched<ts.Node>): boolean => {
+    const classifiers = [
+        isRxJSCreationOperator,
+        isRxJSJoinCreationOperator,
+        isObjectOrSubjectConstructor
     ];
 
-    const classifications = classifierMap
-        .filter(tuple => tuple[0](node))
-        .map(tuple => tuple[1]);
-
-    return classifications.length ? classifications.pop() : 'UNCLASSIFIED';
+    const isRxJSNode = classifiers
+        .filter(fn => fn(node))
+        .map(_ => true)
+        .pop();
+    
+    return isRxJSNode ? true : false;
 };
 
 // Classify node, dispatch to appropriate wrapper function.
 export const dispatch = (node: Touched<ts.Node>): ts.Node => {
-    const classification = classify(node);
-
-    switch (classification) {
-        case 'UNCLASSIFIED':
-            return node;
-        case 'RXJS_CREATION_OPERATOR':
-            return wrapRxJSCreationOperator(node as ts.CallExpression);
-        case 'RXJS_JOIN_CREATION_OPERATOR':
-            return wrapRxJSJoinCreationOperator(node as ts.CallExpression);
-        case 'RXJS_OBJECT_SUBJECT_CONSTRUCTOR':
-            return wrapObjectSubjectConstructor(node as ts.NewExpression);
-        default:
-            return node;
-    }
+    const isRxJSNode = classify(node);
+    return isRxJSNode ? wrapRxJSNode(node as ts.CallExpression) : node;
 };

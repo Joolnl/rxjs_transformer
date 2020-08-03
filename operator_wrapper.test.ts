@@ -1,4 +1,4 @@
-import { touch, wrapRxJSCreationOperator, wrapRxJSJoinCreationOperator, wrapObjectSubjectConstructor } from "./operator_wrapper_ref";
+import { touch, wrapRxJSNode } from "./operator_wrapper_ref";
 import { createNode, printNode } from './compiler_helper';
 import * as ts from 'typescript';
 
@@ -9,27 +9,16 @@ test('touch should make a node touched.', () => {
     expect(result.touched).toBe(true);
 });
 
-test('wrapRxJSCreationOperator should create wrapped node from RxJS Creation node.', () => {
-    const [node, sourceFile] = createNode<ts.CallExpression>(`of(100);`, ts.SyntaxKind.CallExpression);
-    const result = wrapRxJSCreationOperator(node);
+test('wrapRxJSCreationOperator should create wrapped node from RxJS creation node.', () => {
+    const [node, sourceFile] = createNode<ts.CallExpression>(`of({a: true, b: 'nope', c: 7});`, ts.SyntaxKind.CallExpression);
+    const result = wrapRxJSNode(node);
     const stringResult = printNode(result, sourceFile);
-    expect(ts.isCallExpression(result)).toBe(true);
-    expect(ts.isCallExpression(result.expression)).toBe(true);
-    expect(stringResult).toMatch(/wrapCreationOperator\(of,.+\)\(100\)/);   //Matches wrapCreationOperator with any metadata object.
+    expect(stringResult).toMatch(/wrapObservableStatement\(.+\)\(of\({ a: true, b: \'nope\', c: 7 }\)\)/);
 });
 
-test('wrapRxJSJoinCreationOperator should create wrapped node from RxJS Join Creation node.', () => {
-    const [node, sourceFile] = createNode<ts.CallExpression>(`merge(interval(100), of('asdf'));`, ts.SyntaxKind.CallExpression);
-    const result = wrapRxJSJoinCreationOperator(node);
+test('wrapRxJSCreationOperator should create wrapped node from RxJS constructor node.', () => {
+    const [node, sourceFile] = createNode<ts.NewExpression>(`new Observable<number>();`, ts.SyntaxKind.NewExpression);
+    const result = wrapRxJSNode(node);
     const stringResult = printNode(result, sourceFile);
-    expect(ts.isCallExpression(result)).toBe(true);
-    expect(ts.isCallExpression(result.expression)).toBe(true);
-    expect(stringResult).toMatch(/wrapJoinOperator\(merge,.+\)\(interval\(100\), of\(\'asdf\'\)\)/);   //Matches wrapJoinOperator with any metadata object.
-});
-
-test('wrapConstructorNode should create wrapped call of constructor call.', () => {
-    const [node, sourceFile] = createNode<ts.NewExpression>(`new Observable<number>(1);`, ts.SyntaxKind.NewExpression);
-    const result = wrapObjectSubjectConstructor(node);
-    const stringResult = printNode(result, sourceFile);
-    expect(stringResult).toMatch(/wrapConstructor\(new Observable<number>\(1\)\)\({.+}\)/);
+    expect(stringResult).toMatch(/wrapObservableStatement\(.+\)\(.+\)/);
 });
