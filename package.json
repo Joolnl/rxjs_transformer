@@ -22,7 +22,7 @@
     "copyfiles": "^2.2.0",
     "ramda": "^0.27.0",
     "rxjs": "^6.5.5",
-    "typescript": "^2.9.2",
+    "typescript": "^3.5.3",
     "uuid": "^7.0.3",
     "webpack": "^4.42.1"
   },

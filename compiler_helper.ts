@@ -26,3 +26,8 @@ export const createNode = <T extends ts.Node>(code: string, type: number): [T, t
 export const printNode = <T extends ts.Node>(node: T, sourceFile: ts.SourceFile): string => {
     return printer.printNode(ts.EmitHint.Expression, node, sourceFile);
 };
+
+// Get string representation of given SourceFile.
+export const printSourceFile = (node: ts.SourceFile): string => {
+    return printer.printFile(node);
+};

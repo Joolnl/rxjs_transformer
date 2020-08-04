@@ -7,6 +7,9 @@ export type Touched<T extends ts.Node> = T & {
     touched?: boolean;
 };
 
+type Transformed<T extends ts.Node> = T & {
+    transformed?: boolean;
+};
 
 type Classifier = (node: ts.Node) => boolean;
 
@@ -59,12 +62,16 @@ export const classify = (node: Touched<ts.Node>): boolean => {
         .filter(fn => fn(node))
         .map(_ => true)
         .pop();
-    
+
     return isRxJSNode ? true : false;
 };
 
+const markAsTransformed = (node: ts.Node): Transformed<ts.Node> => {
+    return { ...node, transformed: true };
+}
+
 // Classify node, dispatch to appropriate wrapper function.
-export const dispatch = (node: Touched<ts.Node>): ts.Node => {
+export const dispatch = (node: Touched<ts.Node>): Transformed<ts.Node> => {
     const isRxJSNode = classify(node);
-    return isRxJSNode ? wrapRxJSNode(node as ts.CallExpression) : node;
+    return isRxJSNode ? markAsTransformed(wrapRxJSNode(node as ts.CallExpression)) : node;
 };

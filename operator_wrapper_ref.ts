@@ -16,4 +16,5 @@ const wrapCallExpressionNode = (call: string) => (node: ts.CallExpression | ts.N
     return ts.createCall(ts.createCall(ts.createIdentifier(call), undefined, [metadata]), undefined, [touch(node)]);
 };
 
-export const wrapRxJSNode = wrapCallExpressionNode(wrapObservableStatement.name);
+// export const wrapRxJSNode = wrapCallExpressionNode(wrapObservableStatement.name);
+export const wrapRxJSNode = wrapCallExpressionNode('wrapObservableStatement');

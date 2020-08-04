@@ -1,0 +1,17 @@
+import * as ts from 'typescript';
+
+const createImportDeclaration = (identifier: string, location: string): ts.ImportDeclaration => {
+    const specifier = ts.createImportSpecifier(undefined, ts.createIdentifier(identifier));
+    const namedImport = ts.createNamedImports([specifier]);
+    const importClause = ts.createImportClause(undefined, namedImport);
+    return ts.createImportDeclaration(undefined, undefined, importClause, ts.createStringLiteral(location));
+};
+
+const addImportToSourceFile = (source: ts.SourceFile, importDecl: ts.ImportDeclaration): ts.SourceFile => {
+    return ts.updateSourceFileNode(source, [importDecl, ...source.statements]);
+};
+
+export const addDefaultImports = (node: ts.SourceFile): ts.SourceFile => {
+    const importDecl = createImportDeclaration('wrapObservableStatement', 'rxjs-transformer/dist/rxjs_wrapper_ref');
+    return addImportToSourceFile(node, importDecl);
+};

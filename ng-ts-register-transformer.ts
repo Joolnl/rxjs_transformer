@@ -1,4 +1,5 @@
 import { rxjsTransformer } from './rxjs_transformer';
+import { RxJSTransformer as rxjs_transformer_ref } from './rxjs_transformer_ref';
 import { AngularCompilerPlugin } from '@ngtools/webpack';
 
 function findAngularCompilerPlugin(webpackCfg): AngularCompilerPlugin | null {
@@ -25,7 +26,7 @@ export default {
       return;
     }
 
-    addTransformerToAngularCompilerPlugin(angularCompilerPlugin, rxjsTransformer);
+    addTransformerToAngularCompilerPlugin(angularCompilerPlugin, rxjs_transformer_ref);
     return cfg;
   },
 
