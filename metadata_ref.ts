@@ -24,6 +24,7 @@ export interface Metadata {
     pos: number;
 }
 
+// Generate UUID for given filename, line number and position combination.
 const generateUUID = (file: string, line: number, pos: number): string => {
     return v5(`${file}${line}${pos}`, 'e01462c8-517f-11ea-8d77-2e728ce88125');
 };
@@ -47,8 +48,8 @@ export const fetchIdentifier = (node: ts.Node): string | null => {
     }
 };
 
-// Extract metadata from call expression node.
-export const extractCallExprMetadata = (node: ts.CallExpression): Metadata => {
+// Extract the shared node metadata aspects.
+const extractGeneralExprMetadata = (node: ts.Node): Metadata => {
     const { file, line, pos } = extractLocation(node);
     const uuid = generateUUID(file, line, pos);
     const identifier = fetchIdentifier(node);
@@ -64,21 +65,19 @@ export const extractCallExprMetadata = (node: ts.CallExpression): Metadata => {
     };
 };
 
+// Extract metadata from call expression node.
+export const extractCallExprMetadata = (node: ts.CallExpression): Metadata => {
+    return extractGeneralExprMetadata(node);
+};
+
 // Extract metadata from new expression node.
 export const extractNewExprMetadata = (node: ts.NewExpression): Metadata => {
-    const { file, line, pos } = extractLocation(node);
-    const uuid = generateUUID(file, line, pos);
-    const identifier = fetchIdentifier(node);
-    const fn = node.getText();
+    return extractGeneralExprMetadata(node);
+};
 
-    return {
-        uuid,
-        identifier,
-        fn,
-        file,
-        line,
-        pos
-    };
+// Extract metadata from property access expression node.
+export const extractPropertyAccessExprMetadata = (node: ts.PropertyAccessExpression): Metadata => {
+    return extractGeneralExprMetadata(node);
 };
 
 // Export metadata from given node.
@@ -88,6 +87,8 @@ export const extractMetadata = (node: ts.Node): Metadata => {
             return extractCallExprMetadata(node as ts.CallExpression);
         case ts.SyntaxKind.NewExpression:
             return extractNewExprMetadata(node as ts.NewExpression);
+        case ts.SyntaxKind.PropertyAccessExpression:
+            return extractPropertyAccessExprMetadata(node as ts.PropertyAccessExpression);
         default:
             throw new Error(`Node of type ${node.kind} not supported!`);
     };

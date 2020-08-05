@@ -1,4 +1,4 @@
-import { touch, wrapRxJSNode } from "./operator_wrapper_ref";
+import { touch, wrapRxJSNode, wrapSubscribeExpression } from "./operator_wrapper_ref";
 import { createNode, printNode } from './compiler_helper';
 import * as ts from 'typescript';
 
@@ -21,4 +21,11 @@ test('wrapRxJSCreationOperator should create wrapped node from RxJS constructor 
     const result = wrapRxJSNode(node);
     const stringResult = printNode(result, sourceFile);
     expect(stringResult).toMatch(/wrapObservableStatement\(.+\)\(.+\)/);
+});
+
+test('wrapSubscribeExpressions should create wrapped subscribe node.', () => {
+    const [node, sourceFile] = createNode<ts.CallExpression>(`of(100).subscribe(x => console.log(x))`, ts.SyntaxKind.CallExpression);
+    const result = wrapSubscribeExpression(node);
+    const stringResult = printNode(result, sourceFile);
+    expect(stringResult).toMatch(/of\(100\)\.subscribe\(wrapSubscribe\(x => console.log\(x\)\)\({.+}\)\)/);
 });

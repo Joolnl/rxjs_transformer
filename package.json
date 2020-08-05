@@ -10,6 +10,9 @@
     "test:watch": "jest --watch --verbose",
     "debug": "node --debug-brk --inspect ./node_modules/.bin/jest -i"
   },
+  "jest": {
+    "testPathIgnorePatterns": ["/node_modules/", "/dist/"]
+  },
   "author": "Roy Touw",
   "license": "ISC",
   "dependencies": {

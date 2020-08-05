@@ -1,4 +1,4 @@
-import { isRxJSCreationOperator, Touched, isRxJSJoinCreationOperator, classifyDep, dispatch, isObjectOrSubjectConstructor, classify } from './node_dispatcher_ref';
+import { isRxJSCreationOperator, Touched, isRxJSJoinCreationOperator, isObjectOrSubjectConstructor, classify, RxJSPart, isSubscribe } from './node_dispatcher_ref';
 import { createNode } from './compiler_helper';
 import * as ts from 'typescript';
 
@@ -34,12 +34,22 @@ test('isObjectOrSubjectConstructor should identifiy RxJS Subject or Object contr
     expect(isObjectOrSubjectConstructor(node4)).toBe(false);
 });
 
+test('isSubscribe should identify RxJS subscribe call.', () => {
+    const [node] = createNode<ts.CallExpression>(`of(100).subscribe(x => console.log(x))`, ts.SyntaxKind.CallExpression);
+    const [node2] = createNode<ts.CallExpression>(`a.subscribe(x => console.log(x))`, ts.SyntaxKind.CallExpression);
+    const [node3] = createNode<ts.CallExpression>(`of.print(x => console.log(x))`, ts.SyntaxKind.CallExpression);
+
+    expect(isSubscribe(node)).toBe(true);
+    expect(isSubscribe(node2)).toBe(true);    
+    expect(isSubscribe(node3)).toBe(false);    
+});
+
 test('classify should classify RxJS nodes correctly.', () => {
     const [node] = createNode<ts.CallExpression>(`of(100);`, ts.SyntaxKind.CallExpression);
     const result = classify(node);
-    expect(result).toBe(true);
+    expect(result).toBe(RxJSPart.observable);
 
     const [node2] = createNode<ts.CallExpression>(`console.log(100);`, ts.SyntaxKind.CallExpression);
     const result2 = classify(node2);
-    expect(result2).toBe(false);
+    expect(result2).toBe(RxJSPart.unclassified);
 });
