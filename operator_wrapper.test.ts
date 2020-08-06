@@ -23,7 +23,7 @@ test('wrapRxJSCreationOperator should create wrapped node from RxJS constructor 
     expect(stringResult).toMatch(/wrapObservableStatement\(.+\)\(.+\)/);
 });
 
-test('wrapSubscribeExpressions should create wrapped subscribe node.', () => {
+test('wrapSubscribeExpressions should create wrapped subscribe node containing one function.', () => {
     const [node, sourceFile] = createNode<ts.CallExpression>(`of(100).subscribe(x => console.log(x))`, ts.SyntaxKind.CallExpression);
     const result = wrapSubscribeExpression(node);
     const stringResult = printNode(result, sourceFile);
