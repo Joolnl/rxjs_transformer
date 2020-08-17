@@ -8,9 +8,9 @@ export interface Subscriber {
     complete?: any
 }
 
-type next = any;
-type error = any;
-type complete = any;
+type next = (...args: any) => void;
+type error = (...args: any) => void;
+type complete = () => void;
 
 export const wrapObservableStatement = <T, O extends Observable<T>>(metadata: Metadata, send: SendMessage) => (source$: O): O => {
     send(metadata);
@@ -36,8 +36,8 @@ export const wrapSubscriberObject = (metadata: Metadata, send: SendMessage) => (
     const wrappedComplete = wrap(sub.complete);
 
     return {
-        ...sub.next && { 'next': () => wrappedNext() },
-        ...sub.error && { 'error': () => wrappedError() },
+        ...sub.next && { 'next': (...args: any) => wrappedNext(...args) },
+        ...sub.error && { 'error': (...args: any) => wrappedError(...args) },
         ...sub.complete && { 'complete': () => wrappedComplete() }
     };
 };

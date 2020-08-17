@@ -2,7 +2,6 @@ import { wrapObservableStatement, wrapSubscribe, Subscriber, instanceOfSubscribe
 import { of, merge, Subject, Observable } from 'rxjs';
 import { bufferCount } from 'rxjs/operators';
 import { SendMessage } from './message';
-import { Metadata } from './metadata_ref';
 
 const mockSend: SendMessage = (): void => null;
 
@@ -85,6 +84,13 @@ test('wrapSubscribe wrapped subscriber object methods should be called each emit
 test('wrapSubscribe wrapped subscriber error fn should be called on error.', () => {
     const spyError = jest.fn((x: any) => console.log(x));
     const result = wrapSubscribe(null, spyError)(null, mockSend);
-    result.error(new Error('Welp...'));
+    result.error('error');
     expect(spyError).toBeCalledTimes(1);
+});
+
+test('wrapSubscribe wrapped subscriber should not impact behavior.', () => {
+    const result = wrapSubscribe((x: number) => {
+        expect(x).toBe(777);
+    })(null, mockSend);
+    result.next(777);
 });
