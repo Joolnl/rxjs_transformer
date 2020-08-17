@@ -18,22 +18,27 @@ export const wrapObservableStatement = <T, O extends Observable<T>>(metadata: Me
 };
 
 export const instanceOfSubscriber = (object: any): object is Subscriber => {
-    return object !== undefined
+    return object !== undefined && object !== null
         && ('next' in object
             || 'error' in object
             || 'complete' in object);
 };
 
 // Wrap all subscriber methods.
-export const wrapSubscriberObject = (sub: Subscriber, send: SendMessage): Subscriber => {
+export const wrapSubscriberObject = (metadata: Metadata, send: SendMessage) => (sub: Subscriber): Subscriber => {
     const wrap = (fn: any) => {
-
+        send(metadata);
+        return fn;
     };
 
+    const wrappedNext = wrap(sub.next);
+    const wrappedError = wrap(sub.error);
+    const wrappedComplete = wrap(sub.complete);
+
     return {
-        ...sub.next && { 'next': () => sub.next },
-        ...sub.error && { 'error': () => sub.error },
-        ...sub.complete && { 'complete': () => sub.complete }
+        ...sub.next && { 'next': () => wrappedNext() },
+        ...sub.error && { 'error': () => wrappedError() },
+        ...sub.complete && { 'complete': () => wrappedComplete() }
     };
 };
 
@@ -45,15 +50,16 @@ export function wrapSubscribe(next: next, error?: error, complete?: complete): (
 // Simply returns passed arguments in Subscriber form after sending metadata.
 export function wrapSubscribe(subOrNext?: Subscriber | next, error?: error, complete?: complete): (metadata: Metadata, send: SendMessage) => Subscriber {
     return function (metadata, send) {
+        const wrap = wrapSubscriberObject(metadata, send);
         send(metadata);
         if (instanceOfSubscriber(subOrNext)) {
-            return subOrNext as Subscriber;
-        } else if (subOrNext) {
-            return {
-                next: subOrNext,
+            return wrap(subOrNext) as Subscriber;
+        } else if (subOrNext || error || complete) {
+            return wrap({
+                ...subOrNext && { next: subOrNext },
                 ...error && { error },
                 ...complete && { complete }
-            }
+            });
         }
     }
 };

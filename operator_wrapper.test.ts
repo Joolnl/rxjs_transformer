@@ -27,5 +27,5 @@ test('wrapSubscribeExpressions should create wrapped subscribe node containing o
     const [node, sourceFile] = createNode<ts.CallExpression>(`of(100).subscribe(x => console.log(x))`, ts.SyntaxKind.CallExpression);
     const result = wrapSubscribeExpression(node);
     const stringResult = printNode(result, sourceFile);
-    expect(stringResult).toMatch(/of\(100\)\.subscribe\(wrapSubscribe\(x => console.log\(x\)\)\({.+}\)\)/);
+    expect(stringResult).toMatch(/of\(100\)\.subscribe\(wrapSubscribe\(x => console.log\(x\)\)\({.+}, sendToBackpage\)\)/);
 });
