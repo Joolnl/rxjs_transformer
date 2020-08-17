@@ -1,4 +1,4 @@
-import { isRxJSCreationOperator, Touched, isRxJSJoinCreationOperator, isObjectOrSubjectConstructor, classify, RxJSPart, isSubscribe } from './node_dispatcher_ref';
+import { isRxJSCreationOperator, Touched, isRxJSJoinCreationOperator, isObjectOrSubjectConstructor, classify, RxJSPart, isSubscribe, isPipeOperator } from './node_dispatcher_ref';
 import { createNode } from './compiler_helper';
 import * as ts from 'typescript';
 
@@ -42,6 +42,12 @@ test('isSubscribe should identify RxJS subscribe call.', () => {
     expect(isSubscribe(node)).toBe(true);
     expect(isSubscribe(node2)).toBe(true);    
     expect(isSubscribe(node3)).toBe(false);    
+});
+
+test('isPipeOperator should identify RxJS pipeable operator.', () => {
+    const [node] = createNode<ts.CallExpression>(`source$.pipe(map(x => 7));`, ts.SyntaxKind.CallExpression);
+    const operator = node.arguments[0] as ts.CallExpression;
+    expect(isPipeOperator(operator)).toBe(true);
 });
 
 test('classify should classify RxJS nodes correctly.', () => {

@@ -16,7 +16,8 @@ const wrapCallExpressionNode = (call: string) => (node: ts.CallExpression | ts.N
 };
 
 // export const wrapRxJSNode = wrapCallExpressionNode(wrapObservableStatement.name);
-export const wrapRxJSNode = wrapCallExpressionNode('wrapObservableStatement');
+export const wrapObservableStatement = wrapCallExpressionNode('wrapObservableStatement');
+export const wrapPipeOperatorExpression = wrapCallExpressionNode('wrapPipeOperator')
 
 
 export const wrapSubscribeExpression = (node: ts.CallExpression): ts.CallExpression => {

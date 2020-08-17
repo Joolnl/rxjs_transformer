@@ -19,6 +19,7 @@ export interface Metadata {
     identifier?: string;
     pipe?: string | string[];
     fn?: string;
+    event?: unknown;
     file: string;
     line: number;
     pos: number;

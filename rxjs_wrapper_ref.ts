@@ -1,5 +1,5 @@
-import { Observable } from 'rxjs';
-import { Metadata } from './metadata_ref';
+import { Observable, OperatorFunction } from 'rxjs';
+import { Metadata, RxJSPart } from './metadata_ref';
 import { SendMessage } from './message';
 
 export interface Subscriber {
@@ -26,9 +26,16 @@ export const instanceOfSubscriber = (object: any): object is Subscriber => {
 
 // Wrap all subscriber methods.
 export const wrapSubscriberObject = (metadata: Metadata, send: SendMessage) => (sub: Subscriber): Subscriber => {
-    const wrap = (fn: any) => {
+    const wrap = (fn: next | error | complete) => (...args: any[]): void => {
+        if (metadata) {
+            metadata = {
+                ...metadata,
+                part: RxJSPart.Event,
+                event: args
+            }
+        }
         send(metadata);
-        return fn;
+        fn(...args);
     };
 
     const wrappedNext = wrap(sub.next);
@@ -62,4 +69,11 @@ export function wrapSubscribe(subOrNext?: Subscriber | next, error?: error, comp
             });
         }
     }
+};
+
+// TODO: events need to be aggregated only :)
+// Wrap given pipe oporator and return it afted sending metadata away.
+export const wrapPipeOperator = <T, R> (metadata: Metadata, send: SendMessage) => (operator: OperatorFunction<T, R>): OperatorFunction<T, R> => {
+    send(metadata);
+    return operator;
 };

@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
 import { rxjsCreationOperators, rxjsJoinCreationOperators, rxjsObjectKinds, rxjsSubjectKinds } from './rxjs_operators';
-import { wrapRxJSNode, wrapSubscribeExpression } from './operator_wrapper_ref';
+import { wrapObservableStatement, wrapSubscribeExpression, wrapPipeOperatorExpression } from './operator_wrapper_ref';
 
 // Make node touchable by casting it to Touched.
 export type Touched<T extends ts.Node> = T & {
@@ -16,6 +16,7 @@ type Classifier = (node: ts.Node) => boolean;
 export enum RxJSPart {
     observable = 'OBSERVABLE',
     subscriber = 'SUBSCRIBER',
+    pipeOperator = 'PIPEOPERATOR',
     unclassified = 'UNCLASSIFIED'
 };
 
@@ -65,6 +66,15 @@ export const isSubscribe: Classifier = classifierTemplate((node) => {
     return false;
 });
 
+export const isPipeOperator: Classifier = classifierTemplate((node) => {
+    if (ts.isCallExpression(node) && ts.isCallExpression(node.parent) && ts.isPropertyAccessExpression(node.parent.expression)) {
+        if (ts.isIdentifier(node.parent.expression.name) && node.parent.expression.name.getText() === 'pipe') {
+            return true;
+        }
+    }
+    return false;
+});
+
 // TODO: raises complexitiy of importing to...
 // TODO: wrap and identify pipe
 // Classify node by set of classifiers, if classified return true.
@@ -74,6 +84,7 @@ export const classify = (node: Touched<ts.Node>): RxJSPart => {
         [isRxJSJoinCreationOperator, RxJSPart.observable],
         [isObjectOrSubjectConstructor, RxJSPart.observable],
         [isSubscribe, RxJSPart.subscriber],
+        [isPipeOperator, RxJSPart.pipeOperator]
     ];
 
     const classification =  classifiers
@@ -95,9 +106,11 @@ export const dispatch = (node: Touched<ts.Node>): Transformed<ts.Node> => {
 
     switch (classification) {
         case RxJSPart.observable:
-            return markAsTransformed(wrapRxJSNode(node as ts.CallExpression));
+            return markAsTransformed(wrapObservableStatement(node as ts.CallExpression));
         case RxJSPart.subscriber:
             return markAsTransformed(wrapSubscribeExpression(node as ts.CallExpression));
+        case RxJSPart.pipeOperator:
+            return markAsTransformed(wrapPipeOperatorExpression(node as ts.CallExpression));
         default:
             return node;
     };
