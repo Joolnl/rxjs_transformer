@@ -75,8 +75,6 @@ export const isPipeOperator: Classifier = classifierTemplate((node) => {
     return false;
 });
 
-// TODO: raises complexitiy of importing to...
-// TODO: wrap and identify pipe
 // Classify node by set of classifiers, if classified return true.
 export const classify = (node: Touched<ts.Node>): RxJSPart => {
     const classifiers: [Classifier, RxJSPart][] = [
@@ -87,11 +85,11 @@ export const classify = (node: Touched<ts.Node>): RxJSPart => {
         [isPipeOperator, RxJSPart.pipeOperator]
     ];
 
-    const classification =  classifiers
+    const classification = classifiers
         .filter(tuple => tuple[0](node))
         .map(tuple => tuple[1])
         .pop();
-    
+
     return classification ? classification : RxJSPart.unclassified;
 };
 
@@ -101,17 +99,23 @@ const markAsTransformed = (node: ts.Node): Transformed<ts.Node> => {
 }
 
 // Classify node, dispatch to appropriate wrapper function.
-export const dispatch = (node: Touched<ts.Node>): Transformed<ts.Node> => {
+export const dispatch = (node: Touched<ts.Node>): [Transformed<ts.Node>, RxJSPart] => {
     const classification = classify(node);
 
     switch (classification) {
-        case RxJSPart.observable:
-            return markAsTransformed(wrapObservableStatement(node as ts.CallExpression));
-        case RxJSPart.subscriber:
-            return markAsTransformed(wrapSubscribeExpression(node as ts.CallExpression));
-        case RxJSPart.pipeOperator:
-            return markAsTransformed(wrapPipeOperatorExpression(node as ts.CallExpression));
+        case RxJSPart.observable: {
+            const transformed = markAsTransformed(wrapObservableStatement(node as ts.CallExpression));
+            return [transformed, classification];
+        }
+        case RxJSPart.subscriber: {
+            const transformed = markAsTransformed(wrapSubscribeExpression(node as ts.CallExpression));
+            return [transformed, classification];
+        }
+        case RxJSPart.pipeOperator: {
+            const transformed = markAsTransformed(wrapPipeOperatorExpression(node as ts.CallExpression));
+            return [transformed, classification];
+        }
         default:
-            return node;
+            return [node, classification];
     };
 };

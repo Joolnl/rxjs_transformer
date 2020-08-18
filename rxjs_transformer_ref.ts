@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import { dispatch } from './node_dispatcher_ref';
+import { dispatch, RxJSPart } from './node_dispatcher_ref';
 import { log } from './logger_ref';
 import { addDefaultImports } from './importer_ref';
 
@@ -8,23 +8,27 @@ const excludedFiles: RegExp[] = [
     /.+\/node_modules.+/
 ];
 
+// Recursively visit every node in sourcefile.
 const visitSourceFile = (sourceFile: ts.SourceFile, context: ts.TransformationContext): ts.SourceFile => {
-    let transformed = false;
+    // let transformed = false;
+    const imports = new Set<RxJSPart>();
 
     const visitNodes = (node: ts.Node): ts.Node => {
-        const dispatchedNode = dispatch(node);
-        if(dispatchedNode.transformed) {
-            transformed = true;
-        }
+        const [dispatchedNode, classification] = dispatch(node);
+        imports.add(classification);
+        
+        // if(dispatchedNode.transformed) {
+        //     transformed = true;
+        // }
 
         return ts.visitEachChild(dispatchedNode, visitNodes, context);
     };
 
     const root = visitNodes(sourceFile) as ts.SourceFile;
-    if (transformed) {
-        console.log(`adding default imports to ${root.fileName}`);
-        return addDefaultImports(root);
-    }
+    // if (transformed) {
+    //     return addDefaultImports(root);
+    // }
+    addImports
     return root;
 };
 
@@ -37,7 +41,6 @@ export const RxJSTransformer = (context: ts.TransformationContext) => {
             return rootNode;
         }
 
-        console.log(`transforming  ${rootNode.fileName}`);
         const transformedSourceFile = visitSourceFile(rootNode, context);
         log(transformedSourceFile);
         return transformedSourceFile;

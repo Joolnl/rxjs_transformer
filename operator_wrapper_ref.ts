@@ -48,13 +48,13 @@ export const getSource = (node: ts.CallExpression): ts.Identifier => {
         } else if (ts.isCallExpression(node.expression) || ts.isPropertyAccessExpression(node.expression)) {
             return expressionWalker(node.expression);
         }
-        throw new Error(`Couldn't fetch source from pipe operator 2 ${node.expression.kind}`);
+        throw new Error(`Couldn't fetch source from pipe operator!`);
     }
 
     if (ts.isCallExpression(node.parent)) {
         return expressionWalker(node.parent);
     }
-    throw new Error('Couldn\'t fetch source from pipe operator 1');
+    throw new Error('Couldn\'t fetch source from pipe operator!');
 };
 
 // Template function to wrapp call expression nodes. Returns wrapped node in curried style.
@@ -68,10 +68,8 @@ export const wrapObservableStatement = wrapCallExpressionNode('wrapObservableSta
 // export const wrapPipeOperatorExpression = wrapCallExpressionNode('wrapPipeOperator')
 
 export const wrapPipeOperatorExpression = (node: ts.CallExpression): ts.CallExpression => {
-    const metadata = createMetadataObject(node, RxJSPart.Observable);
+    const metadata = createMetadataObject(node, RxJSPart.Operator);
     const relativePosition = ts.createStringLiteral(getOperatorPosition(node));
-    const source$: ts.Identifier = getSource(node);
-    // return ts.createCall(ts.createCall(ts.createCall(ts.createIdentifier('wrapPipeOperator'), undefined, [metadata, ts.createIdentifier('sendToBackpage'), relativePosition]), undefined, [touch(node)]), undefined, [source$]);
     return ts.createCall(ts.createCall(ts.createIdentifier('wrapPipeOperator'), undefined, [metadata, ts.createIdentifier('sendToBackpage'), relativePosition]), undefined, [touch(node)]);
 };
 
