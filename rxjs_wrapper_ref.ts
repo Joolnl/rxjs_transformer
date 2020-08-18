@@ -1,6 +1,8 @@
 import { Observable, OperatorFunction } from 'rxjs';
 import { Metadata, RxJSPart } from './metadata_ref';
 import { SendMessage } from './message';
+import { OperatorPosition } from './operator_wrapper_ref';
+import { tap } from 'rxjs/operators';
 
 export interface Subscriber {
     next?: any,
@@ -71,9 +73,29 @@ export function wrapSubscribe(subOrNext?: Subscriber | next, error?: error, comp
     }
 };
 
-// TODO: events need to be aggregated only :)
-// Wrap given pipe oporator and return it afted sending metadata away.
-export const wrapPipeOperator = <T, R> (metadata: Metadata, send: SendMessage) => (operator: OperatorFunction<T, R>): OperatorFunction<T, R> => {
-    send(metadata);
-    return operator;
+type AggregatedEvent<T> = {
+    event: T;
+    id: number;
+}
+
+export const aggregateEvent = (() => {
+    let counter = 0;
+    return <T>(event: T, position: OperatorPosition): AggregatedEvent<T> => {
+        if (position === OperatorPosition.first || position === OperatorPosition.only) {
+            counter++;
+        }
+
+        return {
+            event,
+            id: counter
+        };
+    };
+})();
+
+// Plase tap with send after every pipe operator.
+export const wrapPipeOperator = <T, R>(metadata: Metadata, send: SendMessage, position: OperatorPosition) => (operator: OperatorFunction<T,R>) => (source$: Observable<T>) => {
+    return source$.pipe(
+        operator,
+        tap(event => send({...metadata, event: aggregateEvent(event, position)}))
+    );
 };

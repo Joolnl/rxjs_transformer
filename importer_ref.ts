@@ -15,5 +15,6 @@ export const addDefaultImports = (node: ts.SourceFile): ts.SourceFile => {
     const importDecl = createImportDeclaration('wrapObservableStatement', 'rxjs-transformer/dist/rxjs_wrapper_ref');
     const importDecl2 = createImportDeclaration('wrapSubscribe', 'rxjs-transformer/dist/rxjs_wrapper_ref');
     const importDecl3 = createImportDeclaration('sendToBackpage', 'rxjs-transformer/dist/message');
-    return addImportToSourceFile(addImportToSourceFile(addImportToSourceFile(node, importDecl), importDecl2), importDecl3);
+    const importDecl4 = createImportDeclaration('wrapPipeOperator', 'rxjs-transformer/dist/rxjs_wrapper_ref');
+    return addImportToSourceFile(addImportToSourceFile(addImportToSourceFile(addImportToSourceFile(node, importDecl), importDecl2), importDecl3), importDecl4);
 };

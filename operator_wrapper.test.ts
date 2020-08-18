@@ -1,4 +1,4 @@
-import { touch, wrapObservableStatement, wrapSubscribeExpression, wrapPipeOperatorExpression } from "./operator_wrapper_ref";
+import { touch, wrapObservableStatement, wrapSubscribeExpression, wrapPipeOperatorExpression, getOperatorPosition, OperatorPosition, getSource } from "./operator_wrapper_ref";
 import { createNode, printNode } from './compiler_helper';
 import * as ts from 'typescript';
 
@@ -35,5 +35,49 @@ test('wrapPipeOperatorExpression should create wrapped pipeable operator.', () =
     const operator = node.arguments[0] as ts.CallExpression;
     const result = wrapPipeOperatorExpression(operator);
     const stringResult = printNode(result, sourceFile);
-    expect(stringResult).toMatch(/wrapPipeOperator\({.+}, sendToBackpage\)\(filter\(x => x >= 5\)\)/);
+    expect(stringResult).toMatch(/wrapPipeOperator\({.+}, sendToBackpage, \"ONLY\"\)\(filter\(x => x >= 5\)\)/);
+});
+
+test('setOperatorPosition should set the position of only pipeable operator correct.', () => {
+    const [node] = createNode<ts.CallExpression>(`source$.pipe(map(x => 7));`, ts.SyntaxKind.CallExpression);
+    const only = node.arguments[0] as ts.CallExpression;
+    const result = getOperatorPosition(only);
+    expect(result).toBe(OperatorPosition.only);
+});
+
+test('setOperatorPosition should set the position of first pipeable operator correct.', () => {
+    const [node] = createNode<ts.CallExpression>(`source$.pipe(map(x => 7), filter(x => x > 5));`, ts.SyntaxKind.CallExpression);
+    const first = node.arguments[0] as ts.CallExpression;
+    const result = getOperatorPosition(first);
+    expect(result).toBe(OperatorPosition.first);
+});
+
+test('setOperatorPosition should set the position of last pipeable operator correct.', () => {
+    const [node] = createNode<ts.CallExpression>(`source$.pipe(map(x => 7), filter(x => x > 5));`, ts.SyntaxKind.CallExpression);
+    const last = node.arguments[1] as ts.CallExpression;
+    const result = getOperatorPosition(last);
+    expect(result).toBe(OperatorPosition.last);
+});
+
+test('setOperatorPosition should set the position of middle pipeable operator correct.', () => {
+    const [node] = createNode<ts.CallExpression>(`source$.pipe(map(x => 7), filter(x => x > 5), map(x => 'asdf'));`, ts.SyntaxKind.CallExpression);
+    const middle = node.arguments[1] as ts.CallExpression;
+    const result = getOperatorPosition(middle);
+    expect(result).toBe(OperatorPosition.middle);
+});
+
+test('getSource should return the source of a pipeoperator.', () => {
+    const [node, sourceFile] = createNode<ts.CallExpression>(`source$.pipe(map(x => 7), map(x => x += 30));`, ts.SyntaxKind.CallExpression);
+    const pipeOperator = node.arguments[1] as ts.CallExpression;
+    const result = getSource(pipeOperator);
+    const stringResult = printNode(result, sourceFile);
+    expect(stringResult).toBe('source$');
+});
+
+test('getSource should return the source of pipeoperator with multiple pipe statements.', () => {
+    const [node, sourceFile] = createNode<ts.CallExpression>(`source$.pipe(map(x => 7)).pipe(map(x => x += 30));`, ts.SyntaxKind.CallExpression);
+    const pipeOperator = node.arguments[0] as ts.CallExpression;
+    const result = getSource(pipeOperator);
+    const stringResult = printNode(result, sourceFile);
+    expect(stringResult).toBe('source$');
 });
