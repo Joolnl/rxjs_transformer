@@ -10,26 +10,17 @@ const excludedFiles: RegExp[] = [
 
 // Recursively visit every node in sourcefile.
 const visitSourceFile = (sourceFile: ts.SourceFile, context: ts.TransformationContext): ts.SourceFile => {
-    // let transformed = false;
     const imports = new Set<RxJSPart>();
 
     const visitNodes = (node: ts.Node): ts.Node => {
         const [dispatchedNode, classification] = dispatch(node);
         imports.add(classification);
-        
-        // if(dispatchedNode.transformed) {
-        //     transformed = true;
-        // }
 
         return ts.visitEachChild(dispatchedNode, visitNodes, context);
     };
 
     const root = visitNodes(sourceFile) as ts.SourceFile;
-    // if (transformed) {
-    //     return addDefaultImports(root);
-    // }
     return addImports(root, imports)
-    // return root;
 };
 
 // Transform all RxJS nodes to extract metadata without chaning behavior.
