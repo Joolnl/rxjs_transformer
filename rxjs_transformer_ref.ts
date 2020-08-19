@@ -1,7 +1,7 @@
 import ts from 'typescript';
 import { dispatch, RxJSPart } from './node_dispatcher_ref';
 import { log } from './logger_ref';
-import { addDefaultImports } from './importer_ref';
+import { addImports } from './importer_ref';
 
 const excludedFiles: RegExp[] = [
     /.+\/rxjs_wrapper.ts/,
@@ -28,8 +28,8 @@ const visitSourceFile = (sourceFile: ts.SourceFile, context: ts.TransformationCo
     // if (transformed) {
     //     return addDefaultImports(root);
     // }
-    addImports
-    return root;
+    return addImports(root, imports)
+    // return root;
 };
 
 // Transform all RxJS nodes to extract metadata without chaning behavior.

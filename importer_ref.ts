@@ -8,18 +8,6 @@ export const createImportDeclaration = (identifier: string, location: string): t
     return ts.createImportDeclaration(undefined, undefined, importClause, ts.createStringLiteral(location));
 };
 
-const addImportToSourceFile = (source: ts.SourceFile, importDecl: ts.ImportDeclaration): ts.SourceFile => {
-    return ts.updateSourceFileNode(source, [importDecl, ...source.statements]);
-};
-
-// export const addDefaultImports = (node: ts.SourceFile): ts.SourceFile => {
-//     const importDecl = createImportDeclaration('wrapObservableStatement', 'rxjs-transformer/dist/rxjs_wrapper_ref');
-//     const importDecl2 = createImportDeclaration('wrapSubscribe', 'rxjs-transformer/dist/rxjs_wrapper_ref');
-//     const importDecl3 = createImportDeclaration('sendToBackpage', 'rxjs-transformer/dist/message');
-//     const importDecl4 = createImportDeclaration('wrapPipeOperator', 'rxjs-transformer/dist/rxjs_wrapper_ref');
-//     return addImportToSourceFile(addImportToSourceFile(addImportToSourceFile(addImportToSourceFile(node, importDecl), importDecl2), importDecl3), importDecl4);
-// };
-
 // Turn RxJSPart into import declaration.
 export const RxJSPartToImportDeclartion = (() => {
     const wrapObservable = createImportDeclaration('wrapObservableStatement', 'rxjs-transformer/dist/rxjs_wrapper_ref');
@@ -34,12 +22,15 @@ export const RxJSPartToImportDeclartion = (() => {
                 return wrapSubscribe;
             case RxJSPart.pipeOperator:
                 return wrapOperator;
+            case RxJSPart.unclassified:
+                return null;
             default:
                 throw new Error('Unknown RxJSPart!');
         }
     };
 })();
 
+// Recursively add import declarations to sourcefile.
 export const addImportsToSourceFile = (node: ts.SourceFile, imports: ts.ImportDeclaration[]): ts.SourceFile => {
     if (imports.length) {
         return addImportsToSourceFile(
@@ -51,11 +42,13 @@ export const addImportsToSourceFile = (node: ts.SourceFile, imports: ts.ImportDe
     }
 };
 
-// Add required imports to sourcfile node.
+// Add required imports to sourcfile node for given RxJSPart set and sourcefile.
 export const addImports = (node: ts.SourceFile, imports: Set<RxJSPart>): ts.SourceFile => {
-    const importDecls = Array.from(imports).map(part => RxJSPartToImportDeclartion(part));
+    const importDecls = Array.from(imports)
+        .map(part => RxJSPartToImportDeclartion(part))
+        .filter(imp => imp !== null);
     if (importDecls.length) {
         importDecls.push(createImportDeclaration('sendToBackpage', 'rxjs-transformer/dist/message'));
     }
-
+    return addImportsToSourceFile(node, importDecls);
 };
