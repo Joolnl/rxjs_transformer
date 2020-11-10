@@ -11,7 +11,10 @@
     "debug": "node --debug-brk --inspect ./node_modules/.bin/jest -i"
   },
   "jest": {
-    "testPathIgnorePatterns": ["/node_modules/", "/dist/"]
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/dist/"
+    ]
   },
   "author": "Roy Touw",
   "license": "ISC",
@@ -25,7 +28,6 @@
     "copyfiles": "^2.2.0",
     "ramda": "^0.27.0",
     "rxjs": "^6.5.5",
-    "typescript": "^3.5.3",
     "uuid": "^7.0.3",
     "webpack": "^4.42.1"
   },
@@ -33,7 +35,9 @@
     "@babel/core": "^7.9.6",
     "@babel/preset-env": "^7.9.6",
     "@babel/preset-typescript": "^7.9.0",
+    "@types/webpack": "^4.41.24",
     "babel-jest": "^25.5.1",
-    "jest": "^25.5.2"
+    "jest": "^25.5.2",
+    "typescript": "^3.6.5"
   }
 }

@@ -1,7 +1,8 @@
-import { wrapObservableStatement, wrapSubscribe, Subscriber, instanceOfSubscriber, wrapPipeOperator } from "./rxjs_wrapper_ref";
-import { of, merge, Subject, Observable } from 'rxjs';
-import { bufferCount, map, filter } from 'rxjs/operators';
+import { merge, Observable, of, Subject } from 'rxjs';
+import { bufferCount, filter, map } from 'rxjs/operators';
 import { SendMessage } from './message';
+import { OperatorPosition } from './operator_wrapper_ref';
+import { instanceOfSubscriber, Subscriber, wrapObservableStatement, wrapPipeOperator, wrapSubscribe } from './rxjs_wrapper_ref';
 
 const mockSend: SendMessage = (): void => null;
 
@@ -99,9 +100,9 @@ test('wrapPipeOperator should send metadata and return source$.', () => {
     const spy = jest.fn(mockSend);
     const source$ = of(100)
         .pipe(
-            wrapPipeOperator<number, number>(null, spy)(map((x: number) => 200)),
-            wrapPipeOperator<number, number>(null, spy)(filter(x => x > 100)),
-            wrapPipeOperator<number, string>(null, spy)(map(_ => 'whoop'))
+            wrapPipeOperator<number, number>(null, spy, OperatorPosition.last)(map((x: number) => 200)),
+            wrapPipeOperator<number, number>(null, spy, OperatorPosition.last)(filter(x => x > 100)),
+            wrapPipeOperator<number, string>(null, spy, OperatorPosition.last)(map(_ => 'whoop'))
         );
     source$.subscribe(x => expect(x).toBe('whoop'));
     expect(spy).toBeCalledTimes(3);
