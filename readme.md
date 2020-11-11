@@ -17,6 +17,12 @@ The transformer replaces RxJS nodes in the Typescript AST with wrapper versions,
 these wrapper versions send metadata to the devtools extension and return the normal
 behavior herafter.
 
+## Build
+- mention to use this package with the file directive in the package.json because it is not published yet
+- mention to create a 'logs' directory in the dist folder because it is not created during build
+- execute `npm run build` to build
+- for now create a `logs` folder in `dist`
+
 //todo@:switch order of ng add and install transformer
 ## Installation
 1. navigate into angular project
@@ -26,7 +32,7 @@ behavior herafter.
 3. add ngx-build-plus to project:
 3a. ```ng add ngx-build-plus``` (angular 8)
 3b. ```ng add ngx-build-plus@^7``` (angular 6 | 7)
-4. ```npm i {placeholder for rxjs-transformer npm package, not yet public}```
+4. ```npm i {placeholder for rxjs-transformer npm package, not yet public}``` for example: ```npm i ../rxjs_transformer```
 5. mutate angular.json => under serve options add "plugin":  "rxjs-transformer",
 
 e.g. plugin field in serve options:
@@ -54,4 +60,4 @@ e.g. plugin field in serve options:
 * RxJS 7 changes impact on node replacement.
 * Look into splitting rxjs-transformer and rxjs-wrapper.
 * Support for multiple typescript versions for angular6/7/8
-* check if installing ngx-build-plus is runnecessary.
+* check if installing ngx-build-plus is necessary.
