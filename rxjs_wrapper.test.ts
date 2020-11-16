@@ -39,7 +39,7 @@ test('isInstanceOfSubscriber should tell if instance is Subscriber instance.', (
 
 test('wrapSubscribe should return Subscriber object.', () => {
     const result = wrapSubscribe()(null, mockSend);
-    expect(result).toBe(undefined);
+    expect(result).toEqual({"uuid": ""});
 
     const result2 = wrapSubscribe((x: any) => console.log(x))(null, mockSend);
     expect(result2.next).toEqual(expect.any(Function));
@@ -94,6 +94,32 @@ test('wrapSubscribe wrapped subscriber should not impact behavior.', () => {
         expect(x).toBe(777);
     })(null, mockSend);
     result.next(777);
+});
+
+test('wrapSubscribe wrapped subscribe should have the same this context', () => {
+
+    class ExampleSubscriber {
+
+        constructor(public es = []){}
+
+        public next(e){
+            this.es.push(e);
+        }
+    }
+    const exampleSubscriber = new ExampleSubscriber();
+    const exampleSubscriber2 = new ExampleSubscriber();
+
+
+
+    exampleSubscriber.next(7);
+    expect(exampleSubscriber.es).toEqual([7]);
+
+    const wrapped = wrapSubscribe(exampleSubscriber2)(null, mockSend);
+
+    wrapped.next(7);
+    expect(wrapped.es).toEqual([7]);
+
+
 });
 
 test('wrapPipeOperator should send metadata and return source$.', () => {
