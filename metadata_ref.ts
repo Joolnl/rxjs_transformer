@@ -9,7 +9,8 @@ export enum RxJSPart {
     TemplateSubscriber = 'templateSubscriber',
     Pipe = 'pipe',
     Operator = 'operator',
-    Event = 'event'
+    Event = 'event',
+    Subscription = 'subscription'
 }
 
 export interface Metadata {
@@ -21,21 +22,24 @@ export interface Metadata {
     fn?: string;
     event?: unknown;
     file: string;
+    character: number
     line: number;
     pos: number;
 }
 
 // Generate UUID for given filename, line number and position combination.
-const generateUUID = (file: string, line: number, pos: number): string => {
-    return v5(`${file}${line}${pos}`, 'e01462c8-517f-11ea-8d77-2e728ce88125');
+const generateUUID = (file: string, line: number, pos: number, end: number): string => {
+    //return `${file} - ${line} - ${pos} : ${end}`;
+    return v5(`${file}${line}${pos}${end}`, 'e01462c8-517f-11ea-8d77-2e728ce88125');
 };
 
 // Extract location of node in source file, return [file, line, pos].
-const extractLocation = (node: ts.Node): { file: string, line: number, pos: number } => {
-    const file = node.getSourceFile().fileName;
-    const line = node.getSourceFile().getLineAndCharacterOfPosition(node.getStart()).line;
-    const { pos } = node;
-    return { file, line, pos };
+const extractLocation = (node: ts.Node): { file: string, line: number, character: number, pos: number, end: number } => {
+    const sourceFile = node.getSourceFile();
+    const file = sourceFile.fileName;
+    const {line, character } = sourceFile.getLineAndCharacterOfPosition(node.getStart());
+    const { pos, end } = node;
+    return { file, line, character, pos, end };
 };
 
 // Fetch identifier for given node in AST if existing.
@@ -51,8 +55,8 @@ export const fetchIdentifier = (node: ts.Node): string | null => {
 
 // Extract the shared node metadata aspects.
 const extractGeneralExprMetadata = (node: ts.Node): Metadata => {
-    const { file, line, pos } = extractLocation(node);
-    const uuid = generateUUID(file, line, pos);
+    const { file, line, character, pos, end } = extractLocation(node);
+    const uuid = generateUUID(file, line, pos, end);
     const identifier = fetchIdentifier(node);
     const fn = node.getText();
 
@@ -62,6 +66,7 @@ const extractGeneralExprMetadata = (node: ts.Node): Metadata => {
         fn,
         file,
         line,
+        character,
         pos
     };
 };
@@ -112,6 +117,7 @@ const createMetadataObjectLiteral = (metadata: Metadata): ts.ObjectLiteralExpres
         createPrimitiveProperty('fn', metadata.fn),
         createPrimitiveProperty('file', metadata.file),
         createPrimitiveProperty('line', metadata.line),
+        createPrimitiveProperty('character', metadata.character),
         createPrimitiveProperty('pos', metadata.pos)
     ]);
 };

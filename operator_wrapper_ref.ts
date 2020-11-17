@@ -57,7 +57,7 @@ export const getSource = (node: ts.CallExpression): ts.Identifier => {
     throw new Error('Couldn\'t fetch source from pipe operator!');
 };
 
-// Template function to wrapp call expression nodes. Returns wrapped node in curried style.
+// Template function to wrap call expression nodes. Returns wrapped node in curried style.
 const wrapCallExpressionNode = (call: string) => (node: ts.CallExpression | ts.NewExpression): ts.CallExpression => {
     const metadata = createMetadataObject(node, RxJSPart.Observable);
     return ts.createCall(ts.createCall(ts.createIdentifier(call), undefined, [metadata, ts.createIdentifier('sendToBackpage')]), undefined, [touch(node)]);

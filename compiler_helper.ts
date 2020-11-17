@@ -4,7 +4,7 @@ const printer = ts.createPrinter();
 
 // Find the desired node in compiled sourcefile.
 const fetchNodeFromSourceFile = (node: ts.SourceFile | ts.Node): ts.Node => {
-    if (ts.isSourceFile(node) || node.kind === 312 || ts.isExpressionStatement(node)) {
+    if (ts.isSourceFile(node) || node.kind ===  ts.SyntaxKind.SyntaxList || ts.isExpressionStatement(node)) {
         return fetchNodeFromSourceFile(node.getChildren().shift());
     } else {
         return node;

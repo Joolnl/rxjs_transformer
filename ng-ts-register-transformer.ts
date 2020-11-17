@@ -1,4 +1,3 @@
-import { rxjsTransformer } from './rxjs_transformer';
 import { RxJSTransformer as rxjs_transformer_ref } from './rxjs_transformer_ref';
 import { AngularCompilerPlugin } from '@ngtools/webpack';
 

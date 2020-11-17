@@ -12,6 +12,7 @@ const excludedFiles: RegExp[] = [
 const visitSourceFile = (sourceFile: ts.SourceFile, context: ts.TransformationContext): ts.SourceFile => {
     const imports = new Set<RxJSPart>();
 
+    console.log("visitSourceFile", sourceFile.fileName);
     const visitNodes = (node: ts.Node): ts.Node => {
         const [dispatchedNode, classification] = dispatch(node);
         imports.add(classification);
@@ -28,8 +29,9 @@ export const RxJSTransformer = (context: ts.TransformationContext) => {
     return (rootNode: ts.SourceFile) => {
         if (excludedFiles.some(match => match.test(rootNode.fileName))) {
             return rootNode;
-        } else if (!rootNode.fileName.includes('app.component')) {
-            return rootNode;
+            /* } else if (!rootNode.fileName.includes('app.component')) {
+                 return rootNode;
+             }*/
         }
 
         const transformedSourceFile = visitSourceFile(rootNode, context);
